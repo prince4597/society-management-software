@@ -61,15 +61,18 @@ export const SystemHealthCard = () => {
   };
 
   const formatAbsoluteDateFromUptime = (uptimeSeconds: number) => {
-    const bootDate = new Date(Date.now() - uptimeSeconds * 1000);
-    return bootDate.toLocaleString('en-IN', {
-      day: '2-digit',
-      month: 'short',
+    const referenceTime = health ? new Date(health.timestamp).getTime() : Date.now();
+    const bootDate = new Date(referenceTime - uptimeSeconds * 1000);
+    const day = bootDate.getDate();
+    const month = bootDate.toLocaleString('en-US', { month: 'short' });
+    const time = bootDate.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: true
-    });
+      hour12: true,
+    }).replace(/^0/, '');
+    
+    return `${day} ${month}, ${time}`;
   };
 
   const getLoadColor = (load: number) => {
