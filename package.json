@@ -1,0 +1,93 @@
+{
+  "name": "saas-api",
+  "version": "1.0.0",
+  "description": "Production-grade Node.js API with TypeScript, Express, PostgreSQL, and Sequelize",
+  "main": "dist/server.js",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "NODE_ENV=test jest --runInBand --forceExit",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
+    "db:migrate:status": "sequelize-cli db:migrate:status",
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all",
+    "migration:create": "sequelize-cli migration:generate --name",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "nodejs",
+    "typescript",
+    "express",
+    "postgresql",
+    "sequelize",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^7.1.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.13.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.15.0",
+    "xss": "^1.0.15",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/hpp": "^0.2.6",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.7.4",
+    "@types/supertest": "^6.0.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "husky": "^9.1.6",
+    "jest": "^30.2.0",
+    "lint-staged": "^15.2.10",
+    "nodemon": "^3.1.7",
+    "prettier": "^3.3.3",
+    "sequelize-cli": "^6.6.2",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}

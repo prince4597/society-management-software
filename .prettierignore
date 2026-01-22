@@ -1,0 +1,14 @@
+.git
+node_modules
+dist
+logs
+*.log
+.env
+.env.*
+!.env.example
+coverage
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
