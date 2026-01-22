@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import hpp from 'hpp';
+import cookieParser from 'cookie-parser';
 import { env } from './config/environment';
 import {
   errorHandler,
@@ -23,13 +24,13 @@ export const createApp = (): Application => {
   app.set('trust proxy', 1);
 
   app.use(securityHeaders);
-
+  app.use(cookieParser());
   app.use(compression());
 
   app.use(
     cors({
-      origin: env.NODE_ENV === 'production' ? env.CORS_ORIGIN : '*',
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+      origin: [env.CORS_ORIGIN || 'http://localhost:3000'],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
       exposedHeaders: [
         'X-Request-ID',
@@ -48,11 +49,8 @@ export const createApp = (): Application => {
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
   app.use(hpp());
-
   app.use(requestContext);
-
   app.use(sanitize);
-
   app.use(apiRateLimiter);
 
   if (env.NODE_ENV === 'development') {

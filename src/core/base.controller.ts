@@ -38,4 +38,27 @@ export abstract class BaseController {
     };
     return res.status(HttpStatus.OK).json(response);
   }
+
+  protected setCookie(
+    res: Response,
+    name: string,
+    value: string,
+    options: any = {}
+  ): void {
+    res.cookie(name, value, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // Default 7 days
+      ...options,
+    });
+  }
+
+  protected clearCookie(res: Response, name: string): void {
+    res.clearCookie(name, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'lax',
+    });
+  }
 }

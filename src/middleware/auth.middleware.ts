@@ -4,12 +4,15 @@ import { verifyToken } from '../utils/jwt';
 
 export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedError('Authentication required');
+    let token = req.cookies?.token;
+
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
     }
 
-    const token = authHeader.split(' ')[1];
     if (!token) {
       throw new UnauthorizedError('Authentication required');
     }

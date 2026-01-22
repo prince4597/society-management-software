@@ -5,17 +5,19 @@ import { UnauthorizedError } from '../../../middleware/errors';
 import { signToken } from '../../../utils/jwt';
 import { LoginInput } from './dto';
 
+export interface AdminProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  role: string;
+  lastLogin: Date | null;
+}
+
 export interface LoginResponse {
   token: string;
-  admin: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    email: string;
-    role: string;
-    lastLogin: Date | null;
-  };
+  admin: AdminProfile;
 }
 
 export class AuthService {
@@ -60,6 +62,26 @@ export class AuthService {
         role: admin.role?.name || 'UNKNOWN',
         lastLogin: admin.lastLogin || null,
       },
+    };
+  }
+
+  public async getProfile(adminId: string): Promise<AdminProfile> {
+    const admin = await Admin.findByPk(adminId, {
+      include: [{ model: Role, as: 'role', attributes: ['name'] }],
+    });
+
+    if (!admin || !admin.isActive) {
+      throw new UnauthorizedError('Account not found or inactive');
+    }
+
+    return {
+      id: admin.id,
+      firstName: admin.firstName,
+      lastName: admin.lastName,
+      email: admin.email,
+      phoneNumber: admin.phoneNumber,
+      role: admin.role?.name || 'UNKNOWN',
+      lastLogin: admin.lastLogin || null,
     };
   }
 }

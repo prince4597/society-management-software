@@ -3,10 +3,26 @@ import { AuthController } from './controller';
 import { loginSchema } from './dto';
 import { validate } from '../../../middleware/validate.middleware';
 import { authRateLimiter } from '../../../middleware/ratelimit.middleware';
+import { authenticate } from '../../../middleware/auth.middleware';
 import { asyncHandler } from '../../../types';
 
 const router = Router();
 const controller = new AuthController();
+
+/**
+ * @swagger
+ * /admin/auth/me:
+ *   get:
+ *     summary: Get current admin profile
+ *     tags: [Admin Auth]
+ *     responses:
+ *       200:
+ *         description: Profile retrieved
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/me', authenticate, asyncHandler(controller.getProfile));
+router.post('/logout', authenticate, asyncHandler(controller.logout));
 
 /**
  * @swagger
@@ -26,14 +42,11 @@ const controller = new AuthController();
  *             properties:
  *               email:
  *                 type: string
- *                 format: email
  *               password:
  *                 type: string
  *     responses:
  *       200:
  *         description: Login successful
- *       401:
- *         description: Invalid credentials
  */
 router.post(
   '/login',
