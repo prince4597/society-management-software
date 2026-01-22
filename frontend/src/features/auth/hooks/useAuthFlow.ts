@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { authService } from '@/api/auth.service';
-import { useAuth } from '@/contexts/AuthContext';
+import { authService } from '../services/auth.service';
+import { useAuth } from '@/providers/AuthProvider';
 
 export const useAuthFlow = () => {
   const { login: setAuthUser } = useAuth();

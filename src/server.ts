@@ -1,10 +1,13 @@
+import { createServer, Server as HttpServer } from 'http';
 import { app } from './app';
 import { env, connectDatabase, disconnectDatabase } from './config';
 import { initializeModels } from './models';
 import { logger } from './utils/logger';
+import { initSocket, shutdownSocket, socketManager } from './core/socket';
+import { healthBroadcastService } from './modules/health/health-broadcast.service';
 
 class Server {
-  private server: ReturnType<typeof app.listen> | null = null;
+  private httpServer: HttpServer | null = null;
   private isShuttingDown = false;
 
   async start(): Promise<void> {
@@ -12,10 +15,19 @@ class Server {
       await connectDatabase();
       initializeModels();
 
-      this.server = app.listen(env.PORT, () => {
+      this.httpServer = createServer(app);
+      initSocket(this.httpServer);
+
+      this.httpServer.listen(env.PORT, () => {
         logger.info(`🚀 Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
         logger.info(`📊 Docs: http://localhost:${env.PORT}/docs`);
+        logger.info(`🔌 WebSockets: Enabled`);
       });
+
+      socketManager.setOnAdminConnect(() => {
+        void healthBroadcastService.broadcastImmediate();
+      });
+      healthBroadcastService.start();
 
       this.setupGracefulShutdown();
     } catch (error) {
@@ -37,15 +49,22 @@ class Server {
       }, 30000);
 
       try {
-        if (this.server) {
-          await new Promise<void>((resolve) => {
-            this.server!.close(() => {
+        if (this.httpServer) {
+          await new Promise<void>((resolve, reject) => {
+            this.httpServer!.close((err) => {
+              if (err) {
+                logger.error('Error closing HTTP server:', err);
+                reject(err);
+                return;
+              }
               logger.info('HTTP server closed');
               resolve();
             });
           });
         }
 
+        await shutdownSocket();
+        healthBroadcastService.stop();
         await disconnectDatabase();
         clearTimeout(forceShutdownTimer);
         logger.info('Graceful shutdown completed');

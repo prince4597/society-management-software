@@ -22,7 +22,7 @@ const controller = new AuthController();
  *         description: Unauthorized
  */
 router.get('/me', authenticate, asyncHandler(controller.getProfile));
-router.post('/logout', authenticate, asyncHandler(controller.logout));
+router.post('/logout', authenticate, controller.logout);
 
 /**
  * @swagger

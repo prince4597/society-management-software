@@ -1,80 +1,117 @@
 @import "tailwindcss";
 
-:root {
-  /* Minimalist Workspace Light Theme (Google Style) */
-  --background: #ffffff;
-  --foreground: #202124;
-  --primary: #1a73e8;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f3f4;
-  --secondary-foreground: #3c4043;
-  --accent: #1a73e8;
-  --accent-foreground: #ffffff;
-  --destructive: #d93025;
-  --destructive-foreground: #ffffff;
-  --muted: #f8f9fa;
-  --muted-foreground: #5f6368;
-  --card: #ffffff;
-  --card-foreground: #202124;
-  --border: #dadce0;
-  --glass-bg: rgba(255, 255, 255, 0.95);
-  --glass-border: #dadce0;
-  --sidebar-bg: #ffffff;
-  --sidebar-foreground: #3c4043;
-  --sidebar-active: #e8f0fe;
-  --sidebar-active-text: #1a73e8;
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input-bg);
+  --color-ring: var(--primary);
   
-  /* Additional Semantic Colors */
-  --success: #137333;
-  --success-bg: #e6f4ea;
-  --warning: #f29900;
-  --warning-bg: #fef7e0;
-  --error: #d93025;
-  --error-bg: #fce8e6;
-  --input-bg: #f1f3f4;
-  --header-bg: #ffffff;
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+}
+
+:root {
+  /* Curated Premium Light Theme (Indigo-Zinc) */
+  --background: #fbfbfe;
+  --foreground: #020617;
+  
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  
+  --accent: #6366f1;
+  --accent-foreground: #ffffff;
+  
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  
+  --card: #ffffff;
+  --card-foreground: #020617;
+  
+  --border: #e2e8f0;
+  --header-bg: rgba(251, 251, 254, 0.85);
+  
+  /* Compatibility Aliases */
+  --sidebar-bg: #ffffff;
+  --input-bg: #f8fafc;
+  --sidebar-active: #eef2ff;
+  --sidebar-active-text: #4f46e5;
+  
+  /* Additional UI Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(226, 232, 240, 0.6);
 }
 
 [data-theme='dark'] {
-  /* Soft Dark Mode (Workspace Style) */
-  --background: #121212;
-  --foreground: #e8eaed;
-  --primary: #8ab4f8;
-  --primary-foreground: #202124;
-  --secondary: #303134;
-  --secondary-foreground: #e8eaed;
-  --accent: #8ab4f8;
-  --accent-foreground: #202124;
-  --destructive: #f28b82;
-  --destructive-foreground: #202124;
-  --muted: #202124;
-  --muted-foreground: #9aa0a6;
-  --card: #202124;
-  --card-foreground: #e8eaed;
-  --border: #3c4043;
-  --glass-bg: rgba(32, 33, 36, 0.95);
-  --glass-border: #3c4043;
-  --sidebar-bg: #121212;
-  --sidebar-foreground: #e8eaed;
-  --sidebar-active: #3c4043;
-  --sidebar-active-text: #8ab4f8;
+  /* Curated Premium Dark Theme (Deep Obsidian-Slate) */
+  --background: #020617;
+  --foreground: #f8fafc;
+  
+  --primary: #818cf8;
+  --primary-foreground: #020617;
+  
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  
+  --accent: #6366f1;
+  --accent-foreground: #ffffff;
+  
+  --destructive: #991b1b;
+  --destructive-foreground: #ffffff;
+  
+  --muted: #0f172a;
+  --muted-foreground: #94a3b8;
+  
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  
+  --border: #1e293b;
+  --header-bg: rgba(2, 6, 23, 0.85);
 
-  /* Additional Semantic Colors (Dark Mode) */
-  --success: #81c995;
-  --success-bg: #1e332a;
-  --warning: #fcc934;
-  --warning-bg: #332b00;
-  --error: #f28b82;
-  --error-bg: #3c1e1e;
-  --input-bg: #303134;
-  --header-bg: #202124;
+  /* Compatibility Aliases */
+  --sidebar-bg: #020617;
+  --input-bg: #0f172a;
+  --sidebar-active: #1e293b;
+  --sidebar-active-text: #818cf8;
+
+  /* Additional UI Colors (Dark) */
+  --success: #10b981;
+  --warning: #fbbf24;
+  --error: #f87171;
+
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(30, 41, 59, 0.6);
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', Roboto, Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @layer base {
@@ -83,39 +120,102 @@ body {
   }
 }
 
-/* Minimalist Utilities */
-.workspace-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  transition: box-shadow 0.2s ease-in-out;
-}
-
-.workspace-shadow {
-  box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
-}
-
-.workspace-shadow-hover:hover {
-  box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
-}
-
+/* Animations & Utilities */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--glass-border);
 }
 
-/* Shimmer & Progress (Subtle) */
+.workspace-shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.workspace-shadow-hover:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+[data-theme='dark'] .workspace-shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+}
+
+/* Loading States */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .shimmer-mask {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-mask::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+[data-theme='dark'] .shimmer-mask::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+}
+
+/* NProgress Styles */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: var(--primary);
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary);
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary);
+  opacity: 1.0;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* Premium Spinner */
+.premium-spinner {
+  width: 42px;
+  height: 42px;
+  border: 2px solid var(--secondary);
+  border-top-color: var(--primary);
+  border-right-color: var(--primary);
+  border-radius: 50%;
+  animation: premium-spin 0.6s linear infinite;
+  filter: drop-shadow(0 0 8px var(--primary));
+}
+
+@keyframes premium-spin {
+  to { transform: rotate(360deg); }
 }
 
 .loading-progress {
@@ -123,7 +223,52 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 2px;
   background: var(--primary);
   z-index: 100;
+  animation: loading-progress 2s infinite ease-in-out;
+}
+
+@keyframes loading-progress {
+  0% { left: -100%; width: 100%; }
+  50% { left: 0%; width: 100%; }
+  100% { left: 100%; width: 100%; }
+}
+
+/* Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  opacity: 0.2;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
 }

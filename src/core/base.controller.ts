@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, CookieOptions } from 'express';
 import { HttpStatus } from '../types/enums';
 import { PaginatedResult, ApiResponse } from '../types';
 
@@ -43,7 +43,7 @@ export abstract class BaseController {
     res: Response,
     name: string,
     value: string,
-    options: any = {}
+    options: CookieOptions = {}
   ): void {
     res.cookie(name, value, {
       httpOnly: true,

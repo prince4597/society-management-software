@@ -1,5 +1,9 @@
-import { LoginForm } from '@/features/auth/components/LoginForm';
+import { LoginForm, GuestRoute } from '@/features/auth';
 
 export default function LoginPage() {
-  return <LoginForm />;
+  return (
+    <GuestRoute>
+      <LoginForm />
+    </GuestRoute>
+  );
 }

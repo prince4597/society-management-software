@@ -30,7 +30,7 @@ export class AuthController extends BaseController {
     }
   };
 
-  public logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public logout = (req: Request, res: Response, next: NextFunction): void => {
     try {
       this.clearCookie(res, 'token');
       this.success(req, res, null, 'Logged out successfully');
