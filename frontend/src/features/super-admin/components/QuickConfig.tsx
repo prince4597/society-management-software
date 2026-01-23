@@ -1,14 +1,18 @@
 'use client';
 
-import { Settings, ShieldAlert, Cpu, Globe, RefreshCcw } from 'lucide-react';
+import { Settings, ShieldAlert, Globe, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { systemService, type ConfigItem } from '../services/system.service';
 
-export const QuickConfig = () => {
-  const [configs, setConfigs] = useState<ConfigItem[]>([]);
-  const [loading, setLoading] = useState(true);
+interface QuickConfigProps {
+  initialData?: ConfigItem[];
+}
+
+export const QuickConfig = ({ initialData = [] }: QuickConfigProps) => {
+  const [configs, setConfigs] = useState<ConfigItem[]>(initialData);
+  const [loading, setLoading] = useState(!initialData.length);
   const [updating, setUpdating] = useState<string | null>(null);
 
   const fetchConfigs = async () => {
@@ -25,8 +29,9 @@ export const QuickConfig = () => {
   };
 
   useEffect(() => {
+    if (initialData.length > 0) return;
     fetchConfigs();
-  }, []);
+  }, [initialData.length]);
 
   const handleToggle = async (key: string, currentValue: unknown) => {
     try {
@@ -54,13 +59,13 @@ export const QuickConfig = () => {
         <div className="absolute -top-4 -right-4 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
           <Settings size={120} className="text-muted-foreground" />
         </div>
-        
+
         <div className="flex items-center justify-between relative z-10">
           <div>
             <h3 className="font-black text-xl tracking-tight text-foreground">Quick Config</h3>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-tight">Global override switches</p>
           </div>
-          <button 
+          <button
             onClick={() => fetchConfigs()}
             className="p-3 bg-secondary/80 rounded-xl shadow-inner border border-border/50 hover:bg-secondary transition-colors group/refresh"
           >
@@ -85,9 +90,9 @@ export const QuickConfig = () => {
             </div>
             <p className="text-[11px] text-muted-foreground font-medium leading-relaxed italic">Instantly disable non-admin operations across all nodes.</p>
             <div className="pt-1">
-              <Button 
-                variant={maintenance?.value ? "danger" : "outline"} 
-                size="sm" 
+              <Button
+                variant={maintenance?.value ? "danger" : "outline"}
+                size="sm"
                 disabled={updating === 'maintenance_mode'}
                 onClick={() => handleToggle('maintenance_mode', maintenance?.value)}
                 className="w-full text-xs font-black h-10 rounded-xl border-border/60 shadow-sm transition-all"
@@ -113,9 +118,9 @@ export const QuickConfig = () => {
             </div>
             <p className="text-[11px] text-muted-foreground font-medium leading-relaxed italic">Allow new societies to onboard via the public root portal.</p>
             <div className="pt-1">
-              <Button 
-                variant={registration?.value ? "primary" : "outline"} 
-                size="sm" 
+              <Button
+                variant={registration?.value ? "primary" : "outline"}
+                size="sm"
                 disabled={updating === 'registration_enabled'}
                 onClick={() => handleToggle('registration_enabled', registration?.value)}
                 className="w-full text-xs font-black h-10 shadow-lg rounded-xl transition-all"
@@ -127,37 +132,6 @@ export const QuickConfig = () => {
         </div>
       </div>
 
-      {/* Global Cluster Status Sub-card */}
-      <div className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-2xl p-6 relative overflow-hidden group">
-         <div className="absolute -bottom-2 -right-2 opacity-[0.03] group-hover:scale-110 transition-transform">
-            <Cpu size={100} />
-         </div>
-         <div className="flex items-center gap-3 mb-5 relative z-10">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-              <Globe size={18} className="text-primary-foreground animate-[pulse_3s_infinite]" />
-            </div>
-            <h4 className="font-extrabold text-sm tracking-tight text-foreground uppercase">Propagation Status</h4>
-         </div>
-         <div className="space-y-3 relative z-10">
-           {[
-             { region: 'South Asia (Mumbai)', status: 'Optimal', delay: '12ms' },
-             { region: 'US East (N. Virginia)', status: 'Active', delay: '84ms' },
-             { region: 'Europe (Frankfurt)', status: 'Syncing', delay: '210ms' }
-           ].map((r, i) => (
-             <div key={i} className="flex items-center justify-between text-[11px] font-bold">
-                <span className="text-muted-foreground">{r.region}</span>
-                <span className={cn(
-                  "flex items-center gap-2",
-                  r.status === 'Optimal' ? "text-success" : (r.status === 'Syncing' ? "text-warning" : "text-primary")
-                )}>
-                  <span className="text-[9px] font-mono opacity-60">[{r.delay}]</span>
-                  <div className={cn("w-1.5 h-1.5 rounded-full", r.status === 'Optimal' ? "bg-success" : (r.status === 'Syncing' ? "bg-warning animate-pulse" : "bg-primary"))} />
-                  {r.status}
-                </span>
-             </div>
-           ))}
-         </div>
-      </div>
     </div>
   );
 };

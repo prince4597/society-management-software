@@ -89,7 +89,7 @@
     "node": ">=18.0.0"
   },
   "lint-staged": {
-    "*.ts": [
+    "src/**/*.ts": [
       "eslint --fix",
       "prettier --write"
     ]

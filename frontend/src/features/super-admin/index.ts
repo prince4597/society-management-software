@@ -6,6 +6,9 @@ export * from './components/AuditTrail';
 export * from './components/QuickConfig';
 export * from './components/OnboardSocietyForm';
 export * from './components/SocietyManagement';
+export * from './components/SuperAdminInfo';
+export * from './components/ProfileForm';
+export * from './components/SocietyDetail';
 export { systemService } from './services/system.service';
 export type { SystemHealth, GlobalStats, ConfigItem, Society } from '@/types';
 

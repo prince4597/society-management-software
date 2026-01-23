@@ -15,11 +15,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, leftIcon, rightIcon, children, disabled, ...props }, ref) => {
     const variants = {
-      primary: 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm',
-      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-      outline: 'bg-transparent border border-border text-foreground hover:bg-accent hover:text-accent-foreground',
-      ghost: 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent',
-      danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+      primary: 'bg-primary text-primary-foreground shadow-[0_8px_16px_-6px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_12px_24px_-8px_rgba(var(--primary-rgb),0.5)] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 active:scale-[0.97]',
+      secondary: 'bg-secondary/70 backdrop-blur-md text-secondary-foreground border border-white/10 hover:bg-secondary hover:border-white/20 hover:shadow-md active:scale-[0.97]',
+      outline: 'bg-white/5 backdrop-blur-sm border border-border/60 text-foreground hover:bg-white/10 hover:border-primary/40 hover:text-primary hover:shadow-lg hover:shadow-primary/5 active:scale-[0.97]',
+      ghost: 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-white/5 active:scale-[0.97]',
+      danger: 'bg-danger text-danger-foreground shadow-[0_8px_16px_-6px_rgba(var(--danger-rgb),0.3)] hover:shadow-[0_12px_24px_-8px_rgba(var(--danger-rgb),0.5)] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 active:scale-[0.97]',
     };
 
     const sizes = {

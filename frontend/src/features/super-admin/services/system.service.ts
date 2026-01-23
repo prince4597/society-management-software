@@ -5,11 +5,12 @@ import type {
     GlobalStats,
     ConfigItem,
     Society,
+    AdminUser,
     OnboardSocietyInput,
     OnboardSocietyResponse,
 } from '@/types';
 
-export type { SystemHealth, GlobalStats, ConfigItem, Society };
+export type { SystemHealth, GlobalStats, ConfigItem, Society, AdminUser };
 
 export const systemService = {
     async getHealth(): Promise<ApiResponse<SystemHealth>> {
@@ -24,6 +25,19 @@ export const systemService = {
 
     async getConfigs(): Promise<ApiResponse<ConfigItem[]>> {
         const response = await apiClient.get<ApiResponse<ConfigItem[]>>('/admin/super/config');
+        return response.data;
+    },
+
+    async getDashboardData(): Promise<ApiResponse<{
+        stats: GlobalStats;
+        configs: ConfigItem[];
+        health: SystemHealth;
+    }>> {
+        const response = await apiClient.get<ApiResponse<{
+            stats: GlobalStats;
+            configs: ConfigItem[];
+            health: SystemHealth;
+        }>>('/admin/super/dashboard');
         return response.data;
     },
 
@@ -47,6 +61,27 @@ export const systemService = {
 
     async onboardSociety(data: OnboardSocietyInput): Promise<ApiResponse<OnboardSocietyResponse>> {
         const response = await apiClient.post<ApiResponse<OnboardSocietyResponse>>('/societies', data);
+        return response.data;
+    },
+
+    async updateSociety(id: string, data: Partial<Society>): Promise<ApiResponse<Society>> {
+        const response = await apiClient.patch<ApiResponse<Society>>(`/societies/${id}`, data);
+        return response.data;
+    },
+
+    // Standardizing on /admin/super prefixes for all management actions to avoid 404s
+    async updateAdmin(adminId: string, data: Partial<AdminUser>): Promise<ApiResponse<AdminUser>> {
+        const response = await apiClient.patch<ApiResponse<AdminUser>>(`/admin/super/admins/${adminId}`, data);
+        return response.data;
+    },
+
+    async deleteAdmin(adminId: string): Promise<ApiResponse<{ message: string }>> {
+        const response = await apiClient.delete<ApiResponse<{ message: string }>>(`/admin/super/admins/${adminId}`);
+        return response.data;
+    },
+
+    async addAdmin(societyId: string, data: Record<string, unknown>): Promise<ApiResponse<AdminUser>> {
+        const response = await apiClient.post<ApiResponse<AdminUser>>(`/admin/super/societies/${societyId}/admins`, data);
         return response.data;
     },
 };

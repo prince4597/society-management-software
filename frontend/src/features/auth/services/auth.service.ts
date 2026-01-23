@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import type { ApiResponse, AuthResponse, ProfileResponse } from '@/types';
+import type { ApiResponse, AuthResponse, ProfileResponse, AdminUser } from '@/types';
 
 export const authService = {
     async login(data: { email: string; password: string }): Promise<ApiResponse<AuthResponse>> {
@@ -14,6 +14,11 @@ export const authService = {
 
     async getMe(): Promise<ApiResponse<ProfileResponse>> {
         const response = await apiClient.get<ApiResponse<ProfileResponse>>('/admin/auth/me');
+        return response.data;
+    },
+
+    async updateProfile(data: Partial<AdminUser>): Promise<ApiResponse<{ admin: AdminUser }>> {
+        const response = await apiClient.patch<ApiResponse<{ admin: AdminUser }>>('/admin/auth/profile', data);
         return response.data;
     },
 };

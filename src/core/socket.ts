@@ -97,7 +97,7 @@ class SocketManager {
   private setupMiddleware(): void {
     if (!this.io) return;
 
-    this.io.use((socket: TypedSocket, next) => {
+    this.io.use((socket: TypedSocket, next: (err?: Error) => void) => {
       const auth = socket.handshake.auth as SocketAuth;
 
       socket.data.connectedAt = new Date();
@@ -137,11 +137,11 @@ class SocketManager {
         logger.debug(`Socket left room`, { socketId: socket.id, room });
       });
 
-      socket.on('disconnect', (reason) => {
+      socket.on('disconnect', (reason: string) => {
         logger.debug(`Socket disconnected`, { socketId: socket.id, reason });
       });
 
-      socket.on('error', (error) => {
+      socket.on('error', (error: Error) => {
         logger.error(`Socket error`, { socketId: socket.id, error: error.message });
       });
     });
@@ -162,7 +162,9 @@ class SocketManager {
 
   getServer(): TypedSocketServer {
     if (!this.io) {
-      throw new Error('Socket.IO not initialized. Call initialize() first.');
+      throw new Error(
+        'Socket.IO is not initialized. Please call initialize(httpServer) before attempting to access the server instance.'
+      );
     }
     return this.io;
   }
@@ -183,7 +185,7 @@ class SocketManager {
     if (!this.io) return;
 
     return new Promise((resolve) => {
-      void this.io!.close((err) => {
+      void this.io!.close((err?: Error) => {
         if (err) {
           if (err.message === 'Server is not running') {
             logger.debug('Socket.IO server already closed');

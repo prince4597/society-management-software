@@ -8,15 +8,20 @@ import { systemService } from '../services/system.service';
 import type { SystemHealth } from '@/types';
 import { useSocket } from '@/hooks/useSocket';
 
-export const SystemHealthCard = () => {
-  const [health, setHealth] = useState<SystemHealth | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+interface SystemHealthCardProps {
+  initialData?: SystemHealth | null;
+}
+
+export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
+  const [health, setHealth] = useState<SystemHealth | null>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(initialData ? new Date() : null);
   const [isUpdating, setIsUpdating] = useState(false);
   const { on, isConnected } = useSocket();
 
   // Initial Fetch as Fallback
   useEffect(() => {
+    if (initialData) return;
     const fetchInitialHealth = async () => {
       try {
         const res = await systemService.getHealth();
@@ -31,12 +36,12 @@ export const SystemHealthCard = () => {
       }
     };
     fetchInitialHealth();
-  }, []);
+  }, [initialData]);
 
   // Real-time WebSocket Listeners
   useEffect(() => {
     if (!isConnected) return;
-    
+
     const cleanup = on<SystemHealth>('health:update', (data) => {
       setHealth(data);
       setLastUpdate(new Date());
@@ -72,7 +77,7 @@ export const SystemHealthCard = () => {
       second: '2-digit',
       hour12: true,
     }).replace(/^0/, '');
-    
+
     return `${day} ${month}, ${time}`;
   };
 
@@ -108,8 +113,8 @@ export const SystemHealthCard = () => {
         <div className="flex items-center gap-3 relative z-10 self-start md:self-center">
           <div className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border transition-all duration-300",
-            isConnected 
-              ? "bg-success/10 text-success border-success/20" 
+            isConnected
+              ? "bg-success/10 text-success border-success/20"
               : "bg-destructive/10 text-destructive border-destructive/20"
           )}>
             {isConnected ? <Wifi size={12} className={cn(isUpdating && "animate-bounce")} /> : <WifiOff size={12} />}
@@ -125,7 +130,7 @@ export const SystemHealthCard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-        
+
         {/* Memory Load */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -136,7 +141,7 @@ export const SystemHealthCard = () => {
             <span className="font-bold text-foreground font-mono">{health.checks.memory.percentage}%</span>
           </div>
           <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={false}
               animate={{ width: `${health.checks.memory.percentage}%` }}
               className={cn(
@@ -175,7 +180,7 @@ export const SystemHealthCard = () => {
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground font-medium italic truncate" title={health.system.cpuModel}>
-             {health.system.cpuModel}
+            {health.system.cpuModel}
           </p>
         </div>
 
@@ -189,23 +194,23 @@ export const SystemHealthCard = () => {
             <span className="font-bold text-foreground font-mono">{health.sockets.totalConnections}</span>
           </div>
           <div className="flex items-center gap-2 mb-2">
-             <div className="h-1 flex-1 bg-secondary/50 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={false}
-                  animate={{ width: `${Math.min((health.sockets.totalConnections / 100) * 100, 100)}%` }}
-                  className="h-full bg-success rounded-full"
-                />
-             </div>
+            <div className="h-1 flex-1 bg-secondary/50 rounded-full overflow-hidden">
+              <motion.div
+                initial={false}
+                animate={{ width: `${Math.min((health.sockets.totalConnections / 100) * 100, 100)}%` }}
+                className="h-full bg-success rounded-full"
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-1">
-             <div className="flex justify-between text-[10px] text-muted-foreground font-medium italic">
-                <span>Total Connections</span>
-                <span className="font-bold text-foreground">{health.sockets.totalConnections}</span>
-             </div>
-             <div className="flex justify-between text-[10px] text-muted-foreground font-medium italic">
-                <span>Admins Online</span>
-                <span className="font-bold text-primary">{health.sockets.adminConnections}</span>
-             </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground font-medium italic">
+              <span>Total Connections</span>
+              <span className="font-bold text-foreground">{health.sockets.totalConnections}</span>
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground font-medium italic">
+              <span>Admins Online</span>
+              <span className="font-bold text-primary">{health.sockets.adminConnections}</span>
+            </div>
           </div>
         </div>
 
@@ -227,10 +232,10 @@ export const SystemHealthCard = () => {
             </span>
           </div>
           <div className="flex flex-col gap-1 text-[10px] text-muted-foreground font-medium italic border-t border-border/40 pt-2">
-             <div className="flex justify-between">
-                <span>Active Duration:</span>
-                <span className="font-mono font-bold text-primary">{formatDuration(health.uptime)}</span>
-             </div>
+            <div className="flex justify-between">
+              <span>Active Duration:</span>
+              <span className="font-mono font-bold text-primary">{formatDuration(health.uptime)}</span>
+            </div>
           </div>
         </div>
       </div>

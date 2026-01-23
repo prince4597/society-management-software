@@ -14,6 +14,7 @@ const router = Router();
  *         description: Statistics retrieved successfully
  */
 router.get('/stats', superAdminController.getStats);
+router.get('/dashboard', superAdminController.getDashboardData);
 
 /**
  * @swagger

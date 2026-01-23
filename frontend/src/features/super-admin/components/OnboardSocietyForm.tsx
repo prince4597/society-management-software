@@ -12,25 +12,26 @@ import type { ApiError } from '@/lib/api-client';
 
 const onboardSchema = z.object({
   society: z.object({
-    name: z.string().min(3, 'Society name must be at least 3 characters'),
+    name: z.string().trim().min(3, 'Society name must be at least 3 characters'),
     code: z
       .string()
+      .trim()
       .min(2, 'Code must be at least 2 characters')
       .max(50, 'Code must be at most 50 characters')
       .regex(/^[A-Z0-9_-]+$/i, 'Only letters, numbers, hyphens, underscores allowed'),
-    address: z.string().min(10, 'Address must be at least 10 characters'),
-    city: z.string().min(2, 'City is required'),
-    state: z.string().min(2, 'State is required'),
-    zipCode: z.string().min(4, 'ZIP code is required'),
-    email: z.string().email('Invalid email').optional().or(z.literal('')),
-    phone: z.string().optional(),
+    address: z.string().trim().min(10, 'Address must be at least 10 characters'),
+    city: z.string().trim().min(2, 'City is required'),
+    state: z.string().trim().min(2, 'State is required'),
+    zipCode: z.string().trim().min(4, 'ZIP code is required'),
+    email: z.string().trim().email('Invalid email').optional().or(z.literal('')),
+    phone: z.string().trim().regex(/^\+\d{2}\s\d{10}$/, 'Format: +CC XXXXXXXXXX (e.g. +91 9876543210)').optional().or(z.literal('')),
     totalFlats: z.string().optional(),
   }),
   admin: z.object({
-    firstName: z.string().min(2, 'First name must be at least 2 characters'),
-    lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-    email: z.string().email('Invalid admin email'),
-    phoneNumber: z.string().min(10, 'Phone number must be at least 10 digits'),
+    firstName: z.string().trim().min(2, 'First name must be at least 2 characters'),
+    lastName: z.string().trim().min(2, 'Last name must be at least 2 characters'),
+    email: z.string().trim().email('Invalid admin email'),
+    phoneNumber: z.string().trim().regex(/^\+\d{2}\s\d{10}$/, 'Format: +CC XXXXXXXXXX (e.g. +91 9876543210)'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
   }),
 });
@@ -50,6 +51,7 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<OnboardFormValues>({
     resolver: zodResolver(onboardSchema),
@@ -57,6 +59,22 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
       society: { totalFlats: '0' },
     },
   });
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'society.phone' | 'admin.phoneNumber') => {
+    const digits = e.target.value.replace(/\D/g, '');
+    if (!digits) {
+      setValue(field, '');
+      return;
+    }
+    const limited = digits.slice(0, 12);
+    let formatted = '';
+    if (limited.length <= 2) {
+      formatted = `+${limited}`;
+    } else {
+      formatted = `+${limited.slice(0, 2)} ${limited.slice(2)}`;
+    }
+    setValue(field, formatted);
+  };
 
   const onSubmit = async (data: OnboardFormValues) => {
     setIsLoading(true);
@@ -106,7 +124,7 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" autoComplete="off" noValidate>
         <AnimatePresence mode="wait">
           {error && (
             <motion.div
@@ -147,6 +165,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="Green Valley Apartments"
               error={errors.society?.name?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
             <Input
               {...register('society.code')}
@@ -154,6 +174,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="GVA-001"
               error={errors.society?.code?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
           </div>
 
@@ -163,6 +185,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
             placeholder="123 Main Street, Block A"
             error={errors.society?.address?.message}
             disabled={isLoading}
+            autoComplete="one-time-code"
+            data-1p-ignore
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -172,6 +196,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="Mumbai"
               error={errors.society?.city?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
             <Input
               {...register('society.state')}
@@ -179,6 +205,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="Maharashtra"
               error={errors.society?.state?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
             <Input
               {...register('society.zipCode')}
@@ -186,6 +214,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="400001"
               error={errors.society?.zipCode?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
           </div>
 
@@ -197,13 +227,18 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="contact@greenvalley.com"
               error={errors.society?.email?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
             <Input
-              {...register('society.phone')}
+              {...register('society.phone', { onChange: (e) => handlePhoneChange(e, 'society.phone') })}
               label="Society Phone (Optional)"
-              placeholder="+91 9876543210"
+              placeholder="+91 0000000000"
+              maxLength={14}
               error={errors.society?.phone?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
             <Input
               {...register('society.totalFlats')}
@@ -212,6 +247,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="100"
               error={errors.society?.totalFlats?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
           </div>
         </div>
@@ -230,6 +267,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="John"
               error={errors.admin?.firstName?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
             <Input
               {...register('admin.lastName')}
@@ -237,6 +276,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="Doe"
               error={errors.admin?.lastName?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
           </div>
 
@@ -248,13 +289,18 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
               placeholder="admin@greenvalley.com"
               error={errors.admin?.email?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
             <Input
-              {...register('admin.phoneNumber')}
+              {...register('admin.phoneNumber', { onChange: (e) => handlePhoneChange(e, 'admin.phoneNumber') })}
               label="Admin Phone"
-              placeholder="+91 9876543210"
+              placeholder="+91 0000000000"
+              maxLength={14}
               error={errors.admin?.phoneNumber?.message}
               disabled={isLoading}
+              autoComplete="one-time-code"
+              data-1p-ignore
             />
           </div>
 
@@ -265,6 +311,8 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
             placeholder="••••••••"
             error={errors.admin?.password?.message}
             disabled={isLoading}
+            autoComplete="new-password"
+            data-1p-ignore
           />
         </div>
 

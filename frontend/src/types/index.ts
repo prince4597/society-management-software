@@ -8,6 +8,7 @@ export interface AdminUser {
   email: string;
   phoneNumber: string;
   role: string;
+  isActive: boolean;
   lastLogin: string | null;
 }
 
@@ -106,6 +107,7 @@ export interface Society {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  admins?: AdminUser[];
 }
 
 export interface OnboardSocietyInput {

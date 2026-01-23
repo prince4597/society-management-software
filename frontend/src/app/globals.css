@@ -9,8 +9,9 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-success: var(--success);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-card: var(--card);
@@ -30,6 +31,7 @@
   --foreground: #202124;
   
   --primary: #1a73e8;
+  --primary-rgb: 26, 115, 232;
   --primary-foreground: #ffffff;
   
   --secondary: #f1f3f4;
@@ -38,8 +40,9 @@
   --accent: #1a73e8;
   --accent-foreground: #ffffff;
   
-  --destructive: #d93025;
-  --destructive-foreground: #ffffff;
+  --danger: #d93025;
+  --danger-rgb: 217, 48, 37;
+  --danger-foreground: #ffffff;
   
   --muted: #f8f9fa;
   --muted-foreground: #5f6368;
@@ -58,6 +61,7 @@
   
   /* Additional UI Colors */
   --success: #137333;
+  --success-rgb: 19, 115, 51;
   --warning: #f29900;
   --error: #d93025;
   
@@ -71,6 +75,7 @@
   --foreground: #e8eaed;
   
   --primary: #8ab4f8;
+  --primary-rgb: 138, 180, 248;
   --primary-foreground: #202124;
   
   --secondary: #303134;
@@ -79,8 +84,9 @@
   --accent: #8ab4f8;
   --accent-foreground: #202124;
   
-  --destructive: #f28b82;
-  --destructive-foreground: #202124;
+  --danger: #f28b82;
+  --danger-rgb: 242, 139, 130;
+  --danger-foreground: #202124;
   
   --muted: #202124;
   --muted-foreground: #9aa0a6;
@@ -99,6 +105,7 @@
 
   /* Additional UI Colors (Dark) */
   --success: #81c995;
+  --success-rgb: 129, 201, 149;
   --warning: #fcc934;
   --error: #f28b82;
 

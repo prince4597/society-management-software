@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { BaseController } from '../../../core/base.controller';
-import { AuthService } from './service';
+import { AuthService, AdminProfile } from './service';
 import { LoginInput } from './dto';
 
 export class AuthController extends BaseController {
@@ -34,6 +34,18 @@ export class AuthController extends BaseController {
     try {
       this.clearCookie(res, 'token');
       this.success(req, res, null, 'Logged out successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminData = await this.authService.updateProfile(
+        req.user!.id,
+        req.body as Partial<AdminProfile>
+      );
+      this.success(req, res, { admin: adminData }, 'Profile updated successfully');
     } catch (error) {
       next(error);
     }

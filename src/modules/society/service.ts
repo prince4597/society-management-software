@@ -18,6 +18,18 @@ export interface OnboardResult {
   };
 }
 
+export interface SocietyDetailResult extends SocietyAttributes {
+  admins: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    isActive: boolean;
+    role: string;
+  }>;
+}
+
 class SocietyService {
   async onboardSociety(input: CreateSocietyInput): Promise<OnboardResult> {
     const { society: societyData, admin: adminData } = input;
@@ -55,18 +67,28 @@ class SocietyService {
 
     const transaction: Transaction = await sequelize.transaction();
 
+    const phoneRegex = /^\+\d{2}\s\d{10}$/;
+    const validatePhone = (p?: string): string | undefined => {
+      if (p && !phoneRegex.test(p.trim())) {
+        throw new BadRequestError(
+          'Invalid phone format. Protocol: +CC XXXXXXXXXX (e.g. +91 9876543210)'
+        );
+      }
+      return p?.trim();
+    };
+
     try {
       const society = await Society.create(
         {
-          name: societyData.name,
-          code: societyData.code.toUpperCase(),
-          address: societyData.address,
-          city: societyData.city,
-          state: societyData.state,
-          country: societyData.country || 'India',
-          zipCode: societyData.zipCode,
-          email: societyData.email,
-          phone: societyData.phone,
+          name: societyData.name.trim(),
+          code: societyData.code.trim().toUpperCase(),
+          address: societyData.address.trim(),
+          city: societyData.city.trim(),
+          state: societyData.state.trim(),
+          country: societyData.country?.trim() || 'India',
+          zipCode: societyData.zipCode.trim(),
+          email: societyData.email?.trim() || undefined,
+          phone: validatePhone(societyData.phone),
           totalFlats: societyData.totalFlats || 0,
         },
         { transaction }
@@ -76,10 +98,10 @@ class SocietyService {
         {
           roleId: societyAdminRole.id,
           societyId: society.id,
-          firstName: adminData.firstName,
-          lastName: adminData.lastName,
-          email: adminData.email,
-          phoneNumber: adminData.phoneNumber,
+          firstName: adminData.firstName.trim(),
+          lastName: adminData.lastName.trim(),
+          email: adminData.email.trim(),
+          phoneNumber: validatePhone(adminData.phoneNumber)!,
           password: adminData.password,
         },
         { transaction }
@@ -112,12 +134,55 @@ class SocietyService {
     return societies.map((s) => s.toJSON());
   }
 
-  async findById(id: string): Promise<SocietyAttributes> {
-    const society = await Society.findByPk(id);
+  async findById(id: string): Promise<SocietyDetailResult> {
+    const society = await Society.findByPk(id, {
+      include: [
+        {
+          model: Admin,
+          as: 'admins',
+          attributes: { exclude: ['password'] },
+          include: [{ model: Role, as: 'role', attributes: ['name'] }],
+        },
+      ],
+    });
+
     if (!society) {
       throw new NotFoundError('Society', id);
     }
-    return society.toJSON();
+
+    const societyJson = society.get({ plain: true }) as SocietyAttributes & {
+      admins: Array<
+        Admin & {
+          role?: { name: string };
+        }
+      >;
+    };
+
+    return {
+      id: societyJson.id,
+      name: societyJson.name,
+      code: societyJson.code,
+      address: societyJson.address,
+      city: societyJson.city,
+      state: societyJson.state,
+      country: societyJson.country,
+      zipCode: societyJson.zipCode,
+      email: societyJson.email,
+      phone: societyJson.phone,
+      totalFlats: societyJson.totalFlats,
+      isActive: societyJson.isActive,
+      createdAt: societyJson.createdAt,
+      updatedAt: societyJson.updatedAt,
+      admins: (societyJson.admins || []).map((admin) => ({
+        id: admin.id,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        email: admin.email,
+        phoneNumber: admin.phoneNumber,
+        isActive: admin.isActive,
+        role: admin.role?.name || 'ADMIN',
+      })),
+    };
   }
 
   async update(id: string, data: UpdateSocietyInput): Promise<SocietyAttributes> {

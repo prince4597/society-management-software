@@ -7,28 +7,33 @@ import { useEffect, useState } from 'react';
 import { systemService, type GlobalStats } from '../services/system.service';
 import { useSocket } from '@/hooks/useSocket';
 
-export const GlobalMetrics = () => {
-  const [stats, setStats] = useState<GlobalStats | null>(null);
+interface GlobalMetricsProps {
+  initialData?: GlobalStats | null;
+}
+
+export const GlobalMetrics = ({ initialData }: GlobalMetricsProps) => {
+  const [stats, setStats] = useState<GlobalStats | null>(initialData || null);
   const { on, isConnected } = useSocket();
 
   useEffect(() => {
+    if (initialData) return;
     const fetchStats = async () => {
-        try {
-            const res = await systemService.getStats();
-            if (res.success) {
-                setStats(res.data);
-            }
-        } catch (error) {
-            console.error('Failed to fetch global stats:', error);
+      try {
+        const res = await systemService.getStats();
+        if (res.success) {
+          setStats(res.data);
         }
+      } catch (error) {
+        console.error('Failed to fetch global stats:', error);
+      }
     };
     fetchStats();
-  }, []);
+  }, [initialData]);
 
   useEffect(() => {
     if (!isConnected) return;
     return on<GlobalStats>('system:stats:update', (data) => {
-        setStats(data);
+      setStats(data);
     });
   }, [on, isConnected]);
 
@@ -65,7 +70,7 @@ export const GlobalMetrics = () => {
           </div>
           <p className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-widest leading-none relative z-10">{stat.label}</p>
           <div className="flex items-baseline gap-1 mt-2 relative z-10">
-            <motion.h3 
+            <motion.h3
               key={String(stat.value)}
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}

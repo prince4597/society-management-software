@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { BaseController } from '../../core/base.controller';
 import { asyncHandler } from '../../types';
-import { societyService } from './service';
+import { societyService, OnboardResult } from './service';
 import type { CreateSocietyInput, UpdateSocietyInput } from './dto';
 
 class SocietyController extends BaseController {
   onboard = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const input = req.body as CreateSocietyInput;
-    const result = await societyService.onboardSociety(input);
+    const result: OnboardResult = await societyService.onboardSociety(input);
     return this.created(req, res, result, 'Society onboarded successfully');
   });
 

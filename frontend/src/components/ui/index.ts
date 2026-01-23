@@ -3,3 +3,7 @@ export * from './Input';
 export * from './PremiumSplash';
 export * from './RouteProgressBar';
 export * from './ThemeToggle';
+export * from './Table';
+export * from './Pagination';
+export * from './Dialog';
+export * from './ConfirmDialog';
