@@ -28,20 +28,20 @@ export const Pagination: React.FC<PaginationProps> = ({
     <nav
       role="navigation"
       aria-label="pagination"
-      className={cn("flex items-center justify-end space-x-2 md:space-x-4", className)}
+      className={cn("flex items-center justify-end space-x-2", className)}
     >
       <Button
         variant="outline"
         size="sm"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="h-9 px-3 border-border/50 hover:bg-secondary/50 rounded-lg transition-all"
+        className="h-9 truncate"
       >
         <ChevronLeft size={16} className="mr-1" />
-        Previous
+        <span className="hidden sm:inline">Previous</span>
       </Button>
 
-      <div className="hidden sm:flex items-center space-x-1.5">
+      <div className="hidden sm:flex items-center space-x-1">
         {visiblePages.map((page, index) => {
           const isGap = index > 0 && page !== visiblePages[index - 1] + 1;
 
@@ -57,10 +57,8 @@ export const Pagination: React.FC<PaginationProps> = ({
                 size="sm"
                 onClick={() => onPageChange(page)}
                 className={cn(
-                  "w-9 h-9 p-0 rounded-lg transition-all",
-                  currentPage === page
-                    ? "shadow-lg shadow-primary/20 font-bold"
-                    : "border-border/50 hover:bg-secondary/50"
+                  "w-9 h-9 p-0 rounded-lg",
+                  currentPage === page && "font-bold"
                 )}
               >
                 {page}
@@ -70,8 +68,8 @@ export const Pagination: React.FC<PaginationProps> = ({
         })}
       </div>
 
-      <div className="sm:hidden text-xs font-bold uppercase tracking-widest text-muted-foreground mr-2">
-        Page {currentPage} of {totalPages}
+      <div className="sm:hidden text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-2">
+        Page {currentPage} / {totalPages}
       </div>
 
       <Button
@@ -79,9 +77,9 @@ export const Pagination: React.FC<PaginationProps> = ({
         size="sm"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="h-9 px-3 border-border/50 hover:bg-secondary/50 rounded-lg transition-all"
+        className="h-9 truncate"
       >
-        Next
+        <span className="hidden sm:inline">Next</span>
         <ChevronRight size={16} className="ml-1" />
       </Button>
     </nav>

@@ -1,7 +1,6 @@
-'use client';
-
-import { ShieldCheck, MoreVertical, Filter, Download } from 'lucide-react';
+import { ShieldCheck, Filter, Download, MoreHorizontal } from 'lucide-react';
 import { LogItem } from './LogItem';
+import { Card, Button } from '@/components/ui';
 
 const logs = [
   { name: 'John Peterson', action: 'Guest Entry', target: 'Villa 104', time: '10:45 AM', status: 'Approved' },
@@ -12,42 +11,42 @@ const logs = [
 
 export const SecurityLogs = () => {
   return (
-    <div className="bg-card border border-border rounded-lg workspace-shadow overflow-hidden">
-      <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <Card className="overflow-hidden bg-card/30 border-border/40">
+      <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between bg-secondary/5">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary/5 rounded-lg border border-primary/10">
-            <ShieldCheck className="text-primary" size={20} />
+          <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center border border-primary/20">
+            <ShieldCheck className="text-primary" size={16} />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground tracking-tight">Security Access Logs</h2>
-            <p className="text-xs text-muted-foreground font-medium mt-0.5 uppercase tracking-wider">Infrastructure Monitoring</p>
+            <h2 className="text-xs font-bold text-foreground uppercase tracking-[0.1em]">Access Audit Trail</h2>
+            <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Real-time infrastructure monitoring</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button className="p-2 hover:bg-secondary rounded-full text-muted-foreground hover:text-foreground transition-colors" title="Filter">
-            <Filter size={18} strokeWidth={1.5} />
-          </button>
-          <button className="p-2 hover:bg-secondary rounded-full text-muted-foreground hover:text-foreground transition-colors" title="Download">
-            <Download size={18} strokeWidth={1.5} />
-          </button>
-          <button className="p-2 hover:bg-secondary rounded-full text-muted-foreground hover:text-foreground transition-colors">
-            <MoreVertical size={18} strokeWidth={1.5} />
-          </button>
+        <div className="flex items-center gap-1.5">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+            <Filter size={14} />
+          </Button>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+            <Download size={14} />
+          </Button>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+            <MoreHorizontal size={14} />
+          </Button>
         </div>
       </div>
 
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-border/50 bg-card/30">
         {logs.map((log, i) => (
           <LogItem key={i} {...log} index={i} />
         ))}
       </div>
 
-      <div className="p-4 bg-muted/30 border-t border-border text-center">
-        <button className="text-sm font-semibold text-primary hover:underline transition-all">
-          View comprehensive audit trace
-        </button>
+      <div className="p-3 bg-secondary/5 border-t border-border/50">
+        <Button variant="ghost" className="w-full text-[10px] uppercase font-bold tracking-widest h-8 text-primary hover:bg-primary/5">
+          View full audit trail
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 };

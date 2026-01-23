@@ -18,46 +18,27 @@ export const StatCard = ({ label, value, growth, icon: Icon, color, bg, index }:
   const isPositive = growth.startsWith('+');
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 transition-all hover:workspace-shadow group relative"
-    >
-      <div className="flex justify-between items-start mb-4">
-        <div className={cn("p-2 rounded-lg", bg)}>
-          <Icon className={cn("w-5 h-5", color)} />
+    <div className="bg-card border border-border rounded-lg p-5 shadow-sm transition-all hover:border-primary/50 group">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded bg-secondary/50 flex items-center justify-center text-primary border border-border/50">
+          <Icon size={16} />
         </div>
-        <button className="text-[var(--muted-foreground)] p-1 rounded-full hover:bg-[var(--secondary)] opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreVertical size={16} />
-        </button>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{label}</p>
       </div>
 
       <div className="space-y-1">
-        <p className="text-[var(--muted-foreground)] text-xs font-medium uppercase tracking-wider">{label}</p>
-        <div className="flex items-baseline gap-2">
-          <h4 className="text-2xl font-normal text-[var(--foreground)] tracking-tight">{value}</h4>
+        <h4 className="text-2xl font-bold text-foreground tracking-tight leading-none">{value}</h4>
+        <div className="flex items-center gap-2 mt-2">
           <span className={cn(
-            "text-[11px] font-medium flex items-center gap-0.5",
-            isPositive ? "text-[var(--success)]" : "text-[var(--error)]"
+            "text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-secondary/30 border border-border/50",
+            isPositive ? "text-success" : "text-error"
           )}>
-            {isPositive ? <ArrowUpRight size={12} /> : null}
+            {isPositive ? <ArrowUpRight size={10} strokeWidth={3} /> : null}
             {growth}
           </span>
+          <span className="text-[10px] text-muted-foreground font-semibold">vs last month</span>
         </div>
       </div>
-
-      <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between">
-        <span className="text-[10px] text-[var(--muted-foreground)] font-medium">Monthly Progress</span>
-        <div className="w-16 h-1.5 rounded-full bg-[var(--secondary)] overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: isPositive ? '70%' : '35%' }}
-            transition={{ duration: 1, delay: index * 0.1 }}
-            className={cn("h-full", isPositive ? "bg-[var(--success)]" : "bg-[var(--error)]")}
-          />
-        </div>
-      </div>
-    </motion.div>
+    </div>
   );
 };

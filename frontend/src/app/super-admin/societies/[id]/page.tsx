@@ -1,6 +1,6 @@
 'use client';
 
-import { SocietyDetail } from '@/features/super-admin';
+import { SocietyDetailContainer } from '@/features/societies';
 import { use } from 'react';
 
 export default function SocietyDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -8,7 +8,7 @@ export default function SocietyDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="pb-10">
-      <SocietyDetail id={id} />
+      <SocietyDetailContainer id={id} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { SocietyManagement } from '@/features/super-admin';
+import { SocietyManagement } from '@/features/societies';
 
 export default function SocietiesPage() {
   return (

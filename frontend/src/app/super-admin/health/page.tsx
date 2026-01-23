@@ -1,6 +1,6 @@
 'use client';
 
-import { SystemHealthCard, GlobalMetrics, AuditTrail } from '@/features/super-admin';
+import { SystemHealthCard, GlobalMetrics, AuditTrail } from '@/features/system';
 
 export default function HealthPage() {
   return (

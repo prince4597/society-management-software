@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { authService } from '@/features/auth/services/auth.service';
+import { authService } from '@/features/auth/api/auth.service';
 import type { AdminUser } from '@/types';
 import { PremiumSplash } from '@/components/ui';
 
@@ -47,8 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         handleUnauthenticated();
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Session expired');
+    } catch (err: unknown) {
+      const message = typeof err === 'object' && err !== null && 'message' in err 
+        ? (err as { message: string }).message 
+        : 'Session expired';
+      setError(message);
+      
+      // Clear persistence hint on auth failure
+      localStorage.removeItem('hph_session_active');
       handleUnauthenticated();
     }
   }, [handleUnauthenticated]);
@@ -56,11 +62,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Session Refresh
   useEffect(() => {
     if (status === 'idle') {
-      refreshUser();
+      const hasSessionHint = localStorage.getItem('hph_session_active') === 'true';
+      
+      if (!hasSessionHint) {
+        handleUnauthenticated();
+      } else {
+        refreshUser();
+      }
     }
-  }, [status, refreshUser]);
+  }, [status, refreshUser, handleUnauthenticated]);
 
   const login = useCallback((userData: AdminUser) => {
+    localStorage.setItem('hph_session_active', 'true');
     setUser(userData);
     setStatus('authenticated');
     setError(null);
@@ -70,9 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      localStorage.removeItem('hph_session_active');
       await authService.logout();
-    } catch (err) {
-      console.error('Logout request failed', err);
+    } catch (err: unknown) {
+      console.error('Logout request failed', err instanceof Error ? err.message : err);
     } finally {
       handleUnauthenticated();
     }

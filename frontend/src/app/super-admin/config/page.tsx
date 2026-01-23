@@ -1,6 +1,6 @@
 'use client';
 
-import { QuickConfig } from '@/features/super-admin';
+import { QuickConfig } from '@/features/system';
 
 export default function ConfigPage() {
   return (

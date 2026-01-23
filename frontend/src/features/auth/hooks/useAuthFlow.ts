@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { authService } from '../services/auth.service';
+import { authService } from '../api/auth.service';
 import { useAuth } from '@/providers/AuthProvider';
 
 export const useAuthFlow = () => {

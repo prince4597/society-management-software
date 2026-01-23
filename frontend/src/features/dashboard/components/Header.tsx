@@ -1,8 +1,9 @@
 'use client';
 
-import { Search, Menu, User, HelpCircle, Settings, Grid, ShieldCheck } from 'lucide-react';
+import { Search, User, HelpCircle, Settings, Grid, ShieldCheck } from 'lucide-react';
 import type { AdminUser } from '@/types';
-import { ThemeToggle } from '@/components/ui';
+import { ThemeToggle, Button } from '@/components/ui';
+import { Header as BaseHeader } from '@/components/layout/Header';
 
 interface HeaderProps {
   user: AdminUser | null;
@@ -12,58 +13,52 @@ interface HeaderProps {
 
 export const Header = ({ user, onToggleSidebar }: HeaderProps) => {
   return (
-    <header className="h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 z-40 transition-colors duration-200">
-      <div className="flex items-center gap-2 flex-1">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2.5 hover:bg-secondary rounded-full transition-colors text-muted-foreground hover:text-foreground"
-          aria-label="Toggle Navigation Menu"
-        >
-          <Menu size={24} strokeWidth={1.5} />
-        </button>
-
-        <div className="flex items-center gap-2 ml-2">
-          {/* Logo Placeholder */}
-          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center">
-            <ShieldCheck size={18} className="text-primary-foreground" />
+    <BaseHeader
+      onToggleSidebar={onToggleSidebar}
+      leftContent={
+        <div className="flex items-center gap-2.5 ml-2">
+          <div className="w-7 h-7 rounded bg-primary flex items-center justify-center border border-primary/20 shadow-sm">
+            <ShieldCheck size={14} className="text-primary-foreground" strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-semibold text-foreground hidden lg:block tracking-tight">HPH Society</span>
+          <span className="text-xs font-bold text-foreground hidden lg:block uppercase tracking-[0.2em]">Management Console</span>
         </div>
-
-        <div className="max-w-[600px] w-full mx-4 hidden md:block">
+      }
+      centerContent={
+        <div className="max-w-[480px] w-full mx-4 hidden md:block">
           <div className="relative group">
             <div className="absolute left-0 inset-y-0 pl-3 flex items-center pointer-events-none">
-              <Search className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+              <Search className="w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" strokeWidth={2.5} />
             </div>
             <input
               type="text"
-              placeholder="Search administration, residents, or reports"
-              className="block w-full bg-secondary/50 border border-transparent rounded-lg py-2 pl-11 pr-4 text-sm focus:bg-background focus:ring-1 focus:ring-primary focus:border-primary transition-all text-foreground placeholder-muted-foreground"
+              placeholder="Search administration, residents, or reports..."
+              className="block w-full bg-secondary/30 border border-border h-9 rounded-md py-2 pl-9 pr-4 text-[11px] font-medium focus:bg-background focus:ring-2 focus:ring-primary/5 focus:border-primary transition-all text-foreground placeholder-muted-foreground"
             />
           </div>
         </div>
-      </div>
+      }
+      rightContent={
+        <div className="flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-0.5">
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground">
+              <HelpCircle size={16} />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground">
+              <Settings size={16} />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground">
+              <Grid size={16} />
+            </Button>
+          </div>
 
-      <div className="flex items-center gap-1 sm:gap-2">
-        <div className="hidden sm:flex items-center gap-1">
-          <ThemeToggle />
-          <button className="p-2.5 hover:bg-secondary rounded-full transition-colors text-muted-foreground hover:text-foreground" aria-label="Help Center">
-            <HelpCircle size={20} strokeWidth={1.5} />
-          </button>
-          <button className="p-2.5 hover:bg-secondary rounded-full transition-colors text-muted-foreground hover:text-foreground" aria-label="Settings">
-            <Settings size={20} strokeWidth={1.5} />
-          </button>
-          <button className="p-2.5 hover:bg-secondary rounded-full transition-colors text-muted-foreground hover:text-foreground" aria-label="Apps">
-            <Grid size={20} strokeWidth={1.5} />
-          </button>
-        </div>
-
-        <div className="ml-2 pl-2 border-l border-border flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center font-medium text-primary-foreground shadow-sm select-none">
-            {user?.firstName?.[0] || <User size={20} />}
+          <div className="ml-2 pl-2 border-l border-border h-6 flex items-center">
+            <div className="w-8 h-8 rounded bg-secondary/50 flex items-center justify-center border border-border/50 font-bold text-xs text-muted-foreground shadow-sm">
+              {user?.firstName?.[0] || 'A'}
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      }
+    />
   );
 };

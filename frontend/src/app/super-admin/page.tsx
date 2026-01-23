@@ -9,10 +9,8 @@ import {
   QuickConfig,
   SuperAdminInfo,
   systemService,
-  type GlobalStats,
-  type ConfigItem,
-  type SystemHealth
-} from '@/features/super-admin';
+} from '@/features/system';
+import type { GlobalStats, ConfigItem, SystemHealth } from '@/types';
 
 /**
  * SuperAdminPage
@@ -30,10 +28,8 @@ export default function SuperAdminPage() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await systemService.getDashboardData();
-        if (res.success) {
-          setDashboardData(res.data);
-        }
+        const data = await systemService.getDashboardData();
+        setDashboardData(data);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {

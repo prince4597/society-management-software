@@ -185,7 +185,7 @@ class SocietyService {
     };
   }
 
-  async update(id: string, data: UpdateSocietyInput): Promise<SocietyAttributes> {
+  async update(id: string, data: UpdateSocietyInput): Promise<SocietyDetailResult> {
     const society = await Society.findByPk(id);
     if (!society) {
       throw new NotFoundError('Society', id);
@@ -193,7 +193,7 @@ class SocietyService {
 
     await society.update(data);
     logger.info(`Society ${id} updated`);
-    return society.toJSON();
+    return this.findById(id);
   }
 
   async getAdmins(societyId: string): Promise<Admin[]> {

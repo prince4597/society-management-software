@@ -1,43 +1,43 @@
-'use client';
-
 import { Building2, Users, ClipboardList, TrendingUp, AlertCircle, LucideIcon, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui';
+import { Button, Badge, Card } from '@/components/ui';
 
 const OperationalMetric = ({
   icon: Icon,
   label,
   value,
   trend,
-  color,
-  status
+  status,
+  variant = 'neutral'
 }: {
   icon: LucideIcon,
   label: string,
   value: string,
   trend: string,
-  color: string,
-  status?: string
+  status?: string,
+  variant?: 'success' | 'warning' | 'error' | 'neutral'
 }) => (
-  <div className="flex items-center justify-between p-4 bg-card hover:bg-secondary/50 rounded-lg border border-border transition-colors group cursor-pointer">
-    <div className="flex items-center gap-4">
-      <div className={cn("p-2 rounded-lg", color)}>
-        <Icon size={20} strokeWidth={1.5} />
+  <div className="flex items-center justify-between p-3.5 bg-card/50 hover:bg-secondary/30 rounded-lg border border-border/50 transition-colors group cursor-pointer">
+    <div className="flex items-center gap-3">
+      <div className="w-8 h-8 rounded bg-secondary/50 flex items-center justify-center text-muted-foreground border border-border/50 group-hover:text-primary transition-colors">
+        <Icon size={14} />
       </div>
       <div>
-        <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
+        <p className="text-[9px] text-muted-foreground font-bold tracking-widest uppercase leading-none mb-1.5">{label}</p>
         <div className="flex items-center gap-2">
-          <p className="text-base font-semibold text-foreground">{value}</p>
+          <p className="text-sm font-bold text-foreground leading-none">{value}</p>
           {status && (
-            <span className="text-[10px] px-1.5 py-0.5 bg-success/10 text-success rounded-full font-medium">
+            <Badge variant={variant as any} size="sm" className="font-bold tracking-wide">
               {status}
-            </span>
+            </Badge>
           )}
         </div>
       </div>
     </div>
-    <div className="flex items-center gap-1 text-success font-medium text-xs">
-      <TrendingUp size={14} />
+    <div className={cn(
+      "flex items-center gap-1 font-bold text-[10px] tabular-nums px-2 py-0.5 rounded-full bg-secondary/20",
+      trend.startsWith('+') || trend.includes('High') ? "text-success" : "text-muted-foreground"
+    )}>
       {trend}
     </div>
   </div>
@@ -45,60 +45,62 @@ const OperationalMetric = ({
 
 export const SocietyOverview = () => {
   return (
-    <div className="bg-card border border-border rounded-lg p-6 workspace-shadow overflow-hidden group">
-      <div className="flex items-center justify-between mb-6">
+    <Card className="overflow-hidden bg-card/30 border-border/40">
+      <div className="p-5 border-b border-border/50 flex items-center justify-between bg-secondary/5">
         <div>
-          <h3 className="text-xl font-semibold text-foreground tracking-tight">HPH Operations</h3>
-          <p className="text-sm text-muted-foreground mt-1">Status as of Today</p>
+          <h3 className="text-xs font-bold text-foreground uppercase tracking-[0.1em]">Management Overview</h3>
+          <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Real-time operational status</p>
         </div>
-        <div className="w-10 h-10 bg-primary/5 rounded-full flex items-center justify-center">
-          <Building2 size={20} className="text-primary" strokeWidth={1.5} />
+        <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center border border-primary/20">
+          <Building2 size={16} className="text-primary" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 relative">
+      <div className="p-4 space-y-2">
         <OperationalMetric
           icon={Building2}
           label="Unit Occupancy"
           value="1,280 Units"
           status="94.2%"
-          trend="8% vs LY"
-          color="bg-primary/10 text-primary"
+          variant="success"
+          trend="+8% LY"
         />
         <OperationalMetric
           icon={Users}
-          label="Visitor Passes"
+          label="Active Visitor Load"
           value="18 Active"
-          status="High"
+          status="Peak"
+          variant="warning"
           trend="+12% today"
-          color="bg-warning/10 text-warning"
         />
         <OperationalMetric
           icon={ClipboardList}
-          label="Maintenance"
+          label="Pending Maintenance"
           value="4 High Priority"
-          status="Needs Action"
-          trend="-2 resolved"
-          color="bg-destructive/10 text-destructive"
+          status="Action Required"
+          variant="error"
+          trend="84% Resolve"
         />
 
-        <div className="mt-2 p-4 rounded-lg bg-warning/5 border border-warning/10 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="text-warning" size={16} />
-            <h5 className="text-sm font-semibold text-warning">System Alert</h5>
+        <div className="mt-4 p-3 rounded bg-secondary/20 border border-border/50 flex gap-3 items-start">
+          <div className="mt-0.5">
+            <AlertCircle className="text-amber-500" size={14} />
           </div>
-          <p className="text-xs text-foreground/80 leading-relaxed">
-            Fire inspection scheduled for Block C at 2:00 PM tomorrow. Please ensure access points are clear.
-          </p>
+          <div>
+            <h5 className="text-[10px] font-bold text-foreground uppercase tracking-widest mb-1">System Advisory</h5>
+            <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
+              Fire inspection scheduled for <span className="text-foreground font-bold">Block C</span> tomorrow at 14:00. Ensure all access corridors are cleared.
+            </p>
+          </div>
         </div>
-      </div>
 
-      <Button
-        variant="outline"
-        className="w-full mt-6 gap-2"
-      >
-        View Full Schedule <ArrowRight size={16} />
-      </Button>
-    </div>
+        <Button
+          variant="outline"
+          className="w-full mt-4 gap-2 text-[10px] uppercase font-bold tracking-widest h-9 bg-secondary/10 border-border/50 hover:bg-secondary/20"
+        >
+          View Full schedule <ArrowRight size={14} />
+        </Button>
+      </div>
+    </Card>
   );
 };

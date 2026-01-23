@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ShieldCheck, Mail, Phone } from 'lucide-react';
-import { ProfileForm } from '@/features/super-admin/components/ProfileForm';
+import { ProfileForm } from '@/features/profile';
 import { useAuth } from '@/providers/AuthProvider';
 
 export default function ProfilePage() {
