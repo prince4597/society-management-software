@@ -1,19 +1,9 @@
 import { SystemConfig } from '../models';
 import { logger } from '../utils/logger';
 import { broadcastToAdmins } from '../core/socket';
+import { createSingleton } from '../core/singleton';
 
 class SystemConfigService {
-  private static instance: SystemConfigService;
-
-  private constructor() {}
-
-  static getInstance(): SystemConfigService {
-    if (!SystemConfigService.instance) {
-      SystemConfigService.instance = new SystemConfigService();
-    }
-    return SystemConfigService.instance;
-  }
-
   async get(key: string, defaultValue: unknown = null): Promise<unknown> {
     try {
       const config = await SystemConfig.findOne({ where: { key } });
@@ -54,4 +44,4 @@ class SystemConfigService {
   }
 }
 
-export const systemConfigService = SystemConfigService.getInstance();
+export const systemConfigService = createSingleton(() => new SystemConfigService())();

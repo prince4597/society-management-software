@@ -65,6 +65,136 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Societies",
+			"item": [
+				{
+					"name": "Onboard Society",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"society\": {\n        \"name\": \"Green Valley Apartments\",\n        \"code\": \"GVA-001\",\n        \"address\": \"123 Main Street, Block A\",\n        \"city\": \"Mumbai\",\n        \"state\": \"Maharashtra\",\n        \"zipCode\": \"400001\",\n        \"email\": \"contact@greenvalley.com\",\n        \"phone\": \"+91 9876543210\",\n        \"totalFlats\": 100\n    },\n    \"admin\": {\n        \"firstName\": \"John\",\n        \"lastName\": \"Doe\",\n        \"email\": \"admin@greenvalley.com\",\n        \"phoneNumber\": \"9876543210\",\n        \"password\": \"Admin@123\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/societies",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"societies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Societies",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/societies",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"societies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Society by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/societies/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"societies",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Society",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Green Valley\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/societies/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"societies",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Society Admins",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/societies/:id/admins",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"societies",
+								":id",
+								"admins"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [

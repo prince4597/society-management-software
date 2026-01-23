@@ -2,10 +2,12 @@ import { Model, DataTypes, Optional } from 'sequelize';
 import bcrypt from 'bcrypt';
 import { sequelize } from '../config/database';
 import Role from './role.model';
+import Society from './society.model';
 
 interface AdminAttributes {
   id: string;
   roleId: string;
+  societyId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -24,6 +26,7 @@ export interface AdminCreationAttributes extends Optional<AdminAttributes, 'id' 
 class Admin extends Model<AdminAttributes, AdminCreationAttributes> implements AdminAttributes {
   declare id: string;
   declare roleId: string;
+  declare societyId?: string;
   declare firstName: string;
   declare lastName: string;
   declare email: string;
@@ -38,6 +41,7 @@ class Admin extends Model<AdminAttributes, AdminCreationAttributes> implements A
 
   // Associations
   declare readonly role?: Role;
+  declare readonly society?: Society;
 }
 
 Admin.init(
@@ -51,6 +55,11 @@ Admin.init(
       type: DataTypes.UUID,
       allowNull: false,
       field: 'role_id',
+    },
+    societyId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'society_id',
     },
     firstName: {
       type: DataTypes.STRING,
@@ -108,8 +117,11 @@ Admin.init(
   }
 );
 
-// Define Association
+// Define Associations
 Admin.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
 Role.hasMany(Admin, { foreignKey: 'roleId', as: 'admins' });
+
+Admin.belongsTo(Society, { foreignKey: 'societyId', as: 'society' });
+Society.hasMany(Admin, { foreignKey: 'societyId', as: 'admins' });
 
 export default Admin;

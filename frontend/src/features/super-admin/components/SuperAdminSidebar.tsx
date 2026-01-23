@@ -4,6 +4,7 @@ import { LogOut, Plus, LayoutDashboard, Building2, Activity, Settings, ShieldChe
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavItem } from './NavItem';
 import { Button } from '@/components/ui';
+import Link from 'next/link';
 
 interface SuperAdminSidebarProps {
   isOpen: boolean;
@@ -40,13 +41,15 @@ export const SuperAdminSidebar = ({ isOpen, onLogout }: SuperAdminSidebarProps) 
           </div>
 
           <div className="p-4">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start gap-3 h-11 rounded-xl border-dashed border-2 hover:border-primary hover:bg-primary/5 group transition-all"
-            >
-              <Plus className="w-5 h-5 text-primary group-hover:rotate-90 transition-transform duration-300" />
-              <span className="font-bold text-[11px] uppercase tracking-wider">New Society</span>
-            </Button>
+            <Link href="/super-admin/societies" className="block w-full">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-3 h-11 rounded-xl border-dashed border-2 hover:border-primary hover:bg-primary/5 group transition-all"
+              >
+                <Plus className="w-5 h-5 text-primary group-hover:rotate-90 transition-transform duration-300" />
+                <span className="font-bold text-[11px] uppercase tracking-wider">New Society</span>
+              </Button>
+            </Link>
           </div>
 
           <nav className="flex-1 mt-2 px-3 space-y-1.5 overflow-y-auto custom-scrollbar">

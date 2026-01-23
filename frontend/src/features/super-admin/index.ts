@@ -4,4 +4,9 @@ export * from './components/SuperAdminHeader';
 export * from './components/GlobalMetrics';
 export * from './components/AuditTrail';
 export * from './components/QuickConfig';
-export * from './services/system.service';
+export * from './components/OnboardSocietyForm';
+export * from './components/SocietyManagement';
+export { systemService } from './services/system.service';
+export type { SystemHealth, GlobalStats, ConfigItem, Society } from '@/types';
+
+

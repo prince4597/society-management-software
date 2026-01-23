@@ -3,23 +3,6 @@
 import { useCallback } from 'react';
 import { useSocketContext } from '@/providers/SocketProvider';
 
-interface HealthUpdatePayload {
-    status: string;
-    timestamp: string;
-    metrics?: Record<string, unknown>;
-}
-
-interface SystemNotificationPayload {
-    type: 'info' | 'warning' | 'error';
-    message: string;
-    timestamp: string;
-}
-
-interface SocketErrorPayload {
-    message: string;
-    code: string;
-}
-
 export const useSocket = () => {
     const { socket, isConnected, connectionError } = useSocketContext();
 
@@ -59,6 +42,5 @@ export const useSocket = () => {
     };
 };
 
-export type { HealthUpdatePayload, SystemNotificationPayload, SocketErrorPayload };
 
 

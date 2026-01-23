@@ -5,7 +5,7 @@ import {
   GlobalMetrics, 
   SystemHealthCard, 
   AuditTrail, 
-  QuickConfig 
+  QuickConfig
 } from '@/features/super-admin';
 
 /**

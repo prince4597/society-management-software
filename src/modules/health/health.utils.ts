@@ -2,45 +2,15 @@ import os from 'os';
 import { sequelize } from '../../config/database';
 import { logger } from '../../utils/logger';
 import { socketManager } from '../../core/socket';
+import type {
+  HealthCheck,
+  MemoryCheck,
+  SystemInfo,
+  SocketMetrics,
+  SystemHealth,
+} from '../../types/shared';
 
-export interface HealthCheck {
-  status: 'up' | 'down';
-  latency?: number;
-  message?: string;
-}
-
-export interface MemoryCheck {
-  status: 'up' | 'warning';
-  heapUsed: number;
-  heapTotal: number;
-  rss: number;
-  percentage: number;
-}
-
-export interface SystemInfo {
-  platform: string;
-  cpuModel: string;
-  cpus: number;
-  loadAvg: number[];
-}
-
-export interface SocketMetrics {
-  totalConnections: number;
-  adminConnections: number;
-}
-
-export interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  version: string;
-  uptime: number;
-  timestamp: string;
-  checks: {
-    database: HealthCheck;
-    memory: MemoryCheck;
-  };
-  system: SystemInfo;
-  sockets: SocketMetrics;
-}
+export type { HealthCheck, MemoryCheck, SystemInfo, SocketMetrics, SystemHealth };
 
 const VERSION = process.env['npm_package_version'] ?? '1.0.0';
 
@@ -101,7 +71,7 @@ export function determineOverallStatus(
   return 'healthy';
 }
 
-export async function collectHealthData(): Promise<HealthStatus> {
+export async function collectHealthData(): Promise<SystemHealth> {
   const database = await checkDatabase();
   const memory = checkMemory();
   const status = determineOverallStatus(database, memory);

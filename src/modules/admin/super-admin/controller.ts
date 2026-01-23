@@ -4,6 +4,7 @@ import { asyncHandler } from '../../../types';
 import { globalStatsService } from '../../../services/global-stats.service';
 import { systemConfigService } from '../../../services/system-config.service';
 import { SystemConfig } from '../../../models';
+import { BadRequestError } from '../../../middleware/errors';
 
 interface UpdateConfigInput {
   key: string;
@@ -26,12 +27,7 @@ class SuperAdminController extends BaseController {
     const { key, value, description } = req.body as UpdateConfigInput;
 
     if (!key) {
-      return res.status(400).json({
-        success: false,
-        message: 'Key is required',
-        requestId: req.context?.requestId ?? 'unknown',
-        timestamp: new Date().toISOString(),
-      });
+      throw new BadRequestError('Key is required');
     }
 
     await systemConfigService.set(key, value, description);
