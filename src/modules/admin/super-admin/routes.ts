@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { superAdminController } from './controller';
+import { authenticate, authorize } from '../../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -56,7 +57,87 @@ router.get('/config', superAdminController.getConfigs);
  *       400:
  *         description: Key is required
  */
-router.patch('/config', superAdminController.updateConfig);
+router.patch(
+  '/config',
+  authenticate,
+  authorize(['SUPER_ADMIN']),
+  superAdminController.updateConfig
+);
+
+/**
+ * @swagger
+ * /admin/super/societies/{id}/admins:
+ *   post:
+ *     summary: Add new admin node to a society
+ *     tags: [Super Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       201:
+ *         description: Admin registered
+ */
+router.post(
+  '/societies/:id/admins',
+  authenticate,
+  authorize(['SUPER_ADMIN']),
+  superAdminController.addAdmin
+);
+
+/**
+ * @swagger
+ * /admin/super/admins/{id}:
+ *   patch:
+ *     summary: Update administrative node status/data
+ *     tags: [Super Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Admin updated
+ */
+router.patch(
+  '/admins/:id',
+  authenticate,
+  authorize(['SUPER_ADMIN']),
+  superAdminController.updateAdmin
+);
+
+/**
+ * @swagger
+ * /admin/super/admins/{id}:
+ *   delete:
+ *     summary: Purge administrative node from the system
+ *     tags: [Super Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Admin purged
+ */
+router.delete(
+  '/admins/:id',
+  authenticate,
+  authorize(['SUPER_ADMIN']),
+  superAdminController.deleteAdmin
+);
 
 export const superAdminRoutes = router;
 export default router;

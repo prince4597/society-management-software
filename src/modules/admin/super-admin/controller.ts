@@ -3,6 +3,7 @@ import { BaseController } from '../../../core/base.controller';
 import { asyncHandler } from '../../../types';
 import { globalStatsService } from '../../../services/global-stats.service';
 import { systemConfigService } from '../../../services/system-config.service';
+import { superAdminService, AdminNodeData, UpdateAdminData } from './service';
 import { SystemConfig } from '../../../models';
 import { BadRequestError } from '../../../middleware/errors';
 import { collectHealthData } from '../../health/health.utils';
@@ -47,6 +48,27 @@ class SuperAdminController extends BaseController {
 
     await systemConfigService.set(key, value, description);
     return this.success(req, res, { message: 'Config updated successfully' });
+  });
+
+  addAdmin = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const { id: societyId } = req.params;
+    const admin = await superAdminService.addAdmin(societyId as string, req.body as AdminNodeData);
+    return this.created(req, res, admin, 'Admin registered successfully');
+  });
+
+  updateAdmin = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const { id: adminId } = req.params;
+    const admin = await superAdminService.updateAdmin(
+      adminId as string,
+      req.body as UpdateAdminData
+    );
+    return this.success(req, res, admin, 'Admin updated successfully');
+  });
+
+  deleteAdmin = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const { id: adminId } = req.params;
+    const result = await superAdminService.deleteAdmin(adminId as string);
+    return this.success(req, res, result, 'Admin deleted successfully');
   });
 }
 
