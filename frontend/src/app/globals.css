@@ -11,7 +11,11 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-info: var(--info);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-card: var(--card);
@@ -19,6 +23,9 @@
   --color-border: var(--border);
   --color-input: var(--input-bg);
   --color-ring: var(--primary);
+  /* Compatibility mapping */
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--danger-foreground);
   
   --radius-lg: 1rem;
   --radius-md: 0.75rem;

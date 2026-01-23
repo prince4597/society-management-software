@@ -144,7 +144,11 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
               animate={{ width: `${health.checks.memory.percentage}%` }}
               className={cn(
                 "h-full rounded-full transition-all duration-700 ease-out",
-                health.checks.memory.percentage > 90 ? "bg-destructive" : health.checks.memory.percentage > 70 ? "bg-warning" : "bg-blue-500"
+                health.checks.memory.percentage > 90 
+                  ? "bg-danger" 
+                  : health.checks.memory.percentage > 75 
+                    ? "bg-warning" 
+                    : "bg-info"
               )}
             />
           </div>

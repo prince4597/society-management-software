@@ -32,14 +32,18 @@ export async function checkDatabase(): Promise<HealthCheck> {
 }
 
 export function checkMemory(): MemoryCheck {
-  const memoryUsage = process.memoryUsage();
-  const percentage = Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100);
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedMem = totalMem - freeMem;
+  const percentage = Math.round((usedMem / totalMem) * 100);
+
+  const v8Memory = process.memoryUsage();
 
   return {
     status: percentage > 90 ? 'warning' : 'up',
-    heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-    heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
-    rss: Math.round(memoryUsage.rss / 1024 / 1024),
+    heapUsed: Math.round(usedMem / 1024 / 1024),
+    heapTotal: Math.round(totalMem / 1024 / 1024),
+    rss: Math.round(v8Memory.rss / 1024 / 1024),
     percentage,
   };
 }
