@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, Menu, User, Bell, Settings } from 'lucide-react';
-import type { AdminUser } from '@/types';
+import type { AdminUser } from '../types';
 import { ThemeToggle } from '@/components/ui';
 import { motion } from 'framer-motion';
 import Link from 'next/link';

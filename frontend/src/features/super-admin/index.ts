@@ -9,7 +9,11 @@ export * from './components/SocietyManagement';
 export * from './components/SuperAdminInfo';
 export * from './components/ProfileForm';
 export * from './components/SocietyDetail';
+
 export { systemService } from './services/system.service';
-export type { SystemHealth, GlobalStats, ConfigItem, Society } from '@/types';
+export * from './hooks/useSociety';
+export * from './hooks/useSocieties';
+export * from './hooks/useOnboardSociety';
+export * from './types';
 
 

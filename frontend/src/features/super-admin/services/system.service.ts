@@ -1,14 +1,13 @@
 import apiClient from '@/lib/api-client';
+import type { ApiResponse, AdminUser } from '@/types';
 import type {
-    ApiResponse,
     SystemHealth,
     GlobalStats,
     ConfigItem,
     Society,
-    AdminUser,
     OnboardSocietyInput,
     OnboardSocietyResponse,
-} from '@/types';
+} from '../types';
 
 export type { SystemHealth, GlobalStats, ConfigItem, Society, AdminUser };
 

@@ -8,9 +8,11 @@ import {
   AuditTrail,
   QuickConfig,
   SuperAdminInfo,
-  systemService
+  systemService,
+  type GlobalStats,
+  type ConfigItem,
+  type SystemHealth
 } from '@/features/super-admin';
-import type { GlobalStats, ConfigItem, SystemHealth } from '@/types';
 
 /**
  * SuperAdminPage

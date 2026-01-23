@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -24,8 +24,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button, ConfirmDialog, Input, Dialog } from '@/components/ui';
-import { systemService } from '../services/system.service';
-import type { Society, AdminUser } from '@/types';
+import { useSociety } from '../hooks/useSociety';
+import type { AdminUser } from '../types';
 import { cn } from '@/lib/utils';
 
 interface SocietyDetailProps {
@@ -33,10 +33,17 @@ interface SocietyDetailProps {
 }
 
 export const SocietyDetail = ({ id }: SocietyDetailProps) => {
-  const [society, setSociety] = useState<Society | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [showStatusConfirm, setShowStatusConfirm] = useState(false);
+  const {
+    society,
+    isLoading,
+    isUpdating,
+    updateSociety,
+    toggleStatus: toggleSocietyStatus,
+    addAdmin: registerAdmin,
+    updateAdminStatus,
+    deleteAdmin: purgeAdmin,
+  } = useSociety(id);
+
   const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
   const [adminAction, setAdminAction] = useState<'deactivate' | 'delete' | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -47,14 +54,14 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
     zipCode: ''
   });
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showStatusConfirm, setShowStatusConfirm] = useState(false);
   const [showAddAdminDialog, setShowAddAdminDialog] = useState(false);
   const [addAdminFormData, setAddAdminFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phoneNumber: '',
-    password: '',
-    role: 'ADMIN_SOCIETY'
+    password: ''
   });
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
@@ -63,69 +70,24 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
     setTimeout(() => setNotification(null), 5000);
   }, []);
 
-  useEffect(() => {
-    if (society) {
-      setEditFormData({
-        name: society.name,
-        address: society.address,
-        city: society.city,
-        state: society.state,
-        zipCode: society.zipCode
-      });
-    }
-  }, [society]); // Removed showEditDialog to fix lint warning and avoid unnecessary resets
 
   const handleUpdateRecords = async () => {
-    setIsUpdating(true);
-    try {
-      const res = await systemService.updateSociety(id, editFormData);
-      if (res.success) {
-        await fetchData(); // Force re-fetch to ensure UI is perfectly synced
-        showNotification('success', 'Institutional records synchronized successfully');
-        setShowEditDialog(false);
-      }
-    } catch (err) {
-      console.error('Chronicle Sync Failure: Could not persist records', err);
-      showNotification('error', 'Chronicle Sync Failure: Could not persist records');
-    } finally {
-      setIsUpdating(false);
+    const res = await updateSociety(editFormData);
+    if (res.success) {
+      showNotification('success', 'Institutional records synchronized successfully');
+      setShowEditDialog(false);
+    } else {
+      showNotification('error', res.message || 'Chronicle Sync Failure: Could not persist records');
     }
   };
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const societiesRes = await systemService.getSocietyById(id);
-      if (societiesRes.success) {
-        setSociety(societiesRes.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch society detail:', err);
-      showNotification('error', 'Network Error: Failed to synchronize society records');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id, showNotification]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   const handleToggleStatus = async () => {
-    if (!society) return;
-    setIsUpdating(true);
-    try {
-      const res = await systemService.updateSociety(id, { isActive: !society.isActive });
-      if (res.success) {
-        setSociety(res.data);
-        showNotification('success', `Society node ${!society.isActive ? 'activated' : 'deactivated'} successfully`);
-      }
-    } catch (err) {
-      console.error('Protocol Failure: Could not update node status', err);
-      showNotification('error', 'Protocol Failure: Could not update node status');
-    } finally {
-      setIsUpdating(false);
+    const res = await toggleSocietyStatus();
+    if (res.success) {
+      showNotification('success', `Society node ${!society?.isActive ? 'activated' : 'deactivated'} successfully`);
       setShowStatusConfirm(false);
+    } else {
+      showNotification('error', res.message || 'Protocol Failure: Could not update node status');
     }
   };
 
@@ -136,58 +98,43 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
 
   const handleAdminConfirm = async () => {
     if (!selectedAdmin || !adminAction) return;
-    setIsUpdating(true);
-    console.log(`[Protocol] Executing ${adminAction} on node:`, selectedAdmin.id);
-    try {
-      if (adminAction === 'delete') {
-        await systemService.deleteAdmin(selectedAdmin.id);
+
+    let res;
+    if (adminAction === 'delete') {
+      res = await purgeAdmin(selectedAdmin.id);
+      if (res.success) {
         showNotification('success', `Administrative node ${selectedAdmin.email} purged successfully`);
-      } else {
-        const newStatus = !selectedAdmin.isActive;
-        await systemService.updateAdmin(selectedAdmin.id, { isActive: newStatus });
+      }
+    } else {
+      const newStatus = !selectedAdmin.isActive;
+      res = await updateAdminStatus(selectedAdmin.id, newStatus);
+      if (res.success) {
         showNotification('success', `Administrative node ${selectedAdmin.email} ${newStatus ? 're-activated' : 'deactivated'} successfully`);
       }
-      await fetchData();
-    } catch (err) {
-      console.error(`[Protocol] Administrative ${adminAction} command failure:`, err);
-      showNotification('error', `Protocol Failure: Could not execute ${adminAction} command`);
-    } finally {
-      setIsUpdating(false);
+    }
+
+    if (res && res.success) {
       setSelectedAdmin(null);
       setAdminAction(null);
+    } else {
+      showNotification('error', res?.message || `Protocol Failure: Could not execute ${adminAction} command`);
     }
   };
 
   const handleAddAdmin = async () => {
-    // Mandatory country code pattern enforcement
-    if (!addAdminFormData.phoneNumber.startsWith('+')) {
-      showNotification('error', 'Validation Error: Phone record must include country code (e.g. +91)');
-      return;
-    }
-
-    setIsUpdating(true);
-    console.log('[Protocol] Initiating Administrative Node Registration:', { societyId: id, data: addAdminFormData });
-    try {
-      const res = await systemService.addAdmin(id, addAdminFormData);
-      if (res.success) {
-        console.log('[Protocol] Node Registered Successfully:', res.data);
-        await fetchData();
-        showNotification('success', 'Administrative node registered and linked successfully');
-        setShowAddAdminDialog(false);
-        setAddAdminFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phoneNumber: '',
-          password: '',
-          role: 'ADMIN_SOCIETY'
-        });
-      }
-    } catch (err) {
-      console.error('[Protocol] Administrative Node Registration Failure:', err);
-      showNotification('error', 'Protocol Failure: Could not synchronize new administrative node');
-    } finally {
-      setIsUpdating(false);
+    const res = await registerAdmin(addAdminFormData);
+    if (res.success) {
+      showNotification('success', 'Administrative node registered and linked successfully');
+      setShowAddAdminDialog(false);
+      setAddAdminFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+        password: ''
+      });
+    } else {
+      showNotification('error', res.message || 'Protocol Failure: Could not synchronize new administrative node');
     }
   };
 
@@ -254,7 +201,18 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
 
         <div className="flex items-center gap-3">
           <Button
-            onClick={() => setShowEditDialog(true)}
+            onClick={() => {
+              if (society) {
+                setEditFormData({
+                  name: society.name,
+                  address: society.address,
+                  city: society.city,
+                  state: society.state,
+                  zipCode: society.zipCode
+                });
+              }
+              setShowEditDialog(true);
+            }}
             variant="outline"
             className="rounded-xl font-bold gap-2 text-xs h-10 border-border/40 hover:bg-secondary/50 transition-all"
           >
@@ -312,6 +270,9 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
               value={editFormData.name}
               onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
               className="bg-white/5 border-white/10 focus:border-primary/40"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             <Input
               label="Institutional Code"
@@ -325,6 +286,9 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
             value={editFormData.address}
             onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
             className="bg-white/5 border-white/10 focus:border-primary/40"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
           />
           <div className="grid grid-cols-3 gap-4">
             <Input
@@ -332,18 +296,27 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
               value={editFormData.city}
               onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
               className="bg-white/5 border-white/10 focus:border-primary/40"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             <Input
               label="State"
               value={editFormData.state}
               onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
               className="bg-white/5 border-white/10 focus:border-primary/40"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             <Input
               label="ZIP"
               value={editFormData.zipCode}
               onChange={(e) => setEditFormData({ ...editFormData, zipCode: e.target.value })}
               className="bg-white/5 border-white/10 focus:border-primary/40"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
           </div>
           <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
@@ -391,6 +364,9 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
               onChange={(e) => setAddAdminFormData({ ...addAdminFormData, firstName: e.target.value })}
               placeholder="e.g. John"
               className="bg-white/5 border-white/10"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             <Input
               label="Last Name"
@@ -398,6 +374,9 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
               onChange={(e) => setAddAdminFormData({ ...addAdminFormData, lastName: e.target.value })}
               placeholder="e.g. Doe"
               className="bg-white/5 border-white/10"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
           </div>
           <Input
@@ -407,21 +386,29 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
             placeholder="admin@society.com"
             type="email"
             className="bg-white/5 border-white/10"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
           />
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Phone Number"
               value={addAdminFormData.phoneNumber}
-              onChange={(e) => setAddAdminFormData({ ...addAdminFormData, phoneNumber: e.target.value })}
-              placeholder="+91 XXXX XXX XXX"
+              onChange={(e) => {
+                let val = e.target.value;
+                if (!val.startsWith('+')) val = '+' + val.replace(/\D/g, '');
+                // Add space after country code (+XX )
+                if (val.length === 3 && !val.includes(' ')) val = val + ' ';
+                // Limit length for +91 1234567890
+                if (val.length <= 14) {
+                  setAddAdminFormData({ ...addAdminFormData, phoneNumber: val });
+                }
+              }}
+              placeholder="+91 9876543210"
               className="bg-white/5 border-white/10"
-            />
-            <Input
-              label="Admin Role"
-              value={addAdminFormData.role}
-              onChange={(e) => setAddAdminFormData({ ...addAdminFormData, role: e.target.value })}
-              placeholder="ADMIN_SOCIETY"
-              className="bg-white/5 border-white/10"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
           </div>
           <Input
@@ -431,6 +418,9 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
             placeholder="Initial security key"
             type="password"
             className="bg-white/5 border-white/10"
+            autoComplete="new-password"
+            autoCorrect="off"
+            spellCheck={false}
           />
           <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
             <Button variant="ghost" onClick={() => setShowAddAdminDialog(false)} disabled={isUpdating} className="rounded-xl font-bold">Cancel</Button>
@@ -561,12 +551,12 @@ export const SocietyDetail = ({ id }: SocietyDetailProps) => {
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="hidden sm:flex flex-col items-end">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Protocol</span>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status</span>
                       <span className={cn(
-                        "text-xs font-black uppercase",
-                        admin.isActive ? "text-success" : "text-danger"
+                        "text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-md border",
+                        admin.isActive ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
                       )}>
-                        {admin.isActive ? (admin.role || 'ADMIN') : 'DEACTIVATED'}
+                        {admin.isActive ? 'ACTIVE' : 'INACTIVE'}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">

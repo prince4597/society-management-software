@@ -1,6 +1,4 @@
-'use client';
-
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   Building2,
@@ -22,55 +20,24 @@ import {
   TableCell,
   Pagination
 } from '@/components/ui';
-import { systemService } from '../services/system.service';
+import { useSocieties } from '../hooks/useSocieties';
 import { OnboardSocietyForm } from './OnboardSocietyForm';
-import type { Society } from '@/types';
 
 export const SocietyManagement = () => {
-  const [societies, setSocieties] = useState<Society[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showOnboardForm, setShowOnboardForm] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    societies: pagedSocieties,
+    totalCount,
+    isLoading,
+    searchQuery,
+    setSearchQuery,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    refresh
+  } = useSocieties({ itemsPerPage: 8 });
+
   const itemsPerPage = 8;
-
-  const fetchSocieties = async () => {
-    setIsLoading(true);
-    try {
-      const response = await systemService.getSocieties();
-      if (response.success) {
-        setSocieties(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch societies:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSocieties();
-  }, []);
-
-  const filteredSocieties = useMemo(() => {
-    return societies.filter(s =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.city.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [societies, searchQuery]);
-
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredSocieties.length / itemsPerPage);
-  const pagedSocieties = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredSocieties.slice(start, start + itemsPerPage);
-  }, [filteredSocieties, currentPage, itemsPerPage]);
-
-  // Reset page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
 
   return (
     <div className="space-y-6">
@@ -102,7 +69,7 @@ export const SocietyManagement = () => {
           >
             <OnboardSocietyForm onSuccess={() => {
               setShowOnboardForm(false);
-              fetchSocieties();
+              refresh();
             }} />
           </motion.div>
         ) : (
@@ -210,7 +177,7 @@ export const SocietyManagement = () => {
               {totalPages > 1 && (
                 <div className="pt-6 border-t border-border/40 flex items-center justify-between">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    Showing {pagedSocieties.length} of {filteredSocieties.length} Societies
+                    Showing {pagedSocieties.length} of {totalCount} Societies
                   </p>
                   <Pagination
                     currentPage={currentPage}

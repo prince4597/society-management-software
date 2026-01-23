@@ -1,14 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Building2, User, MapPin, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '@/components/ui';
-import { systemService } from '../services/system.service';
-import type { ApiError } from '@/lib/api-client';
 
 const onboardSchema = z.object({
   society: z.object({
@@ -38,14 +35,14 @@ const onboardSchema = z.object({
 
 type OnboardFormValues = z.infer<typeof onboardSchema>;
 
+import { useOnboardSociety } from '../hooks/useOnboardSociety';
+
 interface OnboardSocietyFormProps {
   onSuccess?: () => void;
 }
 
 export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const { onboard, formatPhone, isLoading, error, success } = useOnboardSociety(onSuccess);
 
   const {
     register,
@@ -61,54 +58,13 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
   });
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'society.phone' | 'admin.phoneNumber') => {
-    const digits = e.target.value.replace(/\D/g, '');
-    if (!digits) {
-      setValue(field, '');
-      return;
-    }
-    const limited = digits.slice(0, 12);
-    let formatted = '';
-    if (limited.length <= 2) {
-      formatted = `+${limited}`;
-    } else {
-      formatted = `+${limited.slice(0, 2)} ${limited.slice(2)}`;
-    }
-    setValue(field, formatted);
+    setValue(field, formatPhone(e.target.value));
   };
 
   const onSubmit = async (data: OnboardFormValues) => {
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await systemService.onboardSociety({
-        society: {
-          name: data.society.name,
-          code: data.society.code,
-          address: data.society.address,
-          city: data.society.city,
-          state: data.society.state,
-          zipCode: data.society.zipCode,
-          email: data.society.email || undefined,
-          phone: data.society.phone,
-          totalFlats: data.society.totalFlats ? parseInt(data.society.totalFlats, 10) : 0,
-        },
-        admin: data.admin,
-      });
-
-      if (response.success) {
-        setSuccess(
-          `Society "${response.data.society.name}" onboarded successfully with admin ${response.data.admin.email}`
-        );
-        reset();
-        onSuccess?.();
-      }
-    } catch (err) {
-      const apiError = err as ApiError;
-      setError(apiError.message || 'Failed to onboard society');
-    } finally {
-      setIsLoading(false);
+    const res = await onboard(data);
+    if (res.success) {
+      reset();
     }
   };
 

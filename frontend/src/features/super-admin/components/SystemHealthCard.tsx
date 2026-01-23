@@ -4,8 +4,7 @@ import { Activity, HardDrive, Zap, Info, Clock, Wifi, WifiOff } from 'lucide-rea
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import { systemService } from '../services/system.service';
-import type { SystemHealth } from '@/types';
+import { systemService, type SystemHealth } from '../services/system.service';
 import { useSocket } from '@/hooks/useSocket';
 
 interface SystemHealthCardProps {
