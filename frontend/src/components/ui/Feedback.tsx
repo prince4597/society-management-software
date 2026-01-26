@@ -16,13 +16,19 @@ interface EmptyStateProps {
 }
 
 export const EmptyState = ({
-  message = "No records identified",
+  message = 'No records identified',
   icon: Icon = Inbox,
-  height = "h-64",
-  className
+  height = 'h-64',
+  className,
 }: EmptyStateProps) => {
   return (
-    <div className={cn("flex flex-col items-center justify-center opacity-30 select-none", height, className)}>
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center opacity-30 select-none',
+        height,
+        className
+      )}
+    >
       <Icon size={48} className="mb-4" strokeWidth={1.5} />
       <p className="font-black uppercase tracking-[0.2em] text-[10px]">{message}</p>
     </div>

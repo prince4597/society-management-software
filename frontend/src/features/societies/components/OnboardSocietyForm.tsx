@@ -58,7 +58,10 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
     },
   });
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'society.phone' | 'admin.phoneNumber') => {
+  const handlePhoneChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: 'society.phone' | 'admin.phoneNumber'
+  ) => {
     setValue(field, formatPhone(e.target.value));
   };
 
@@ -140,15 +143,56 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input {...register('society.city')} label="City" placeholder="Mumbai" error={errors.society?.city?.message} disabled={isLoading} />
-            <Input {...register('society.state')} label="State" placeholder="Maharashtra" error={errors.society?.state?.message} disabled={isLoading} />
-            <Input {...register('society.zipCode')} label="ZIP Code" placeholder="400001" error={errors.society?.zipCode?.message} disabled={isLoading} />
+            <Input
+              {...register('society.city')}
+              label="City"
+              placeholder="Mumbai"
+              error={errors.society?.city?.message}
+              disabled={isLoading}
+            />
+            <Input
+              {...register('society.state')}
+              label="State"
+              placeholder="Maharashtra"
+              error={errors.society?.state?.message}
+              disabled={isLoading}
+            />
+            <Input
+              {...register('society.zipCode')}
+              label="ZIP Code"
+              placeholder="400001"
+              error={errors.society?.zipCode?.message}
+              disabled={isLoading}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input {...register('society.email')} label="Society Email (Optional)" type="email" placeholder="contact@greenvalley.com" error={errors.society?.email?.message} disabled={isLoading} />
-            <Input {...register('society.phone', { onChange: (e) => handlePhoneChange(e, 'society.phone') })} label="Society Phone" placeholder="+91 0000000000" maxLength={14} error={errors.society?.phone?.message} disabled={isLoading} />
-            <Input {...register('society.totalFlats')} label="Total Flats" type="number" placeholder="100" error={errors.society?.totalFlats?.message} disabled={isLoading} />
+            <Input
+              {...register('society.email')}
+              label="Society Email (Optional)"
+              type="email"
+              placeholder="contact@greenvalley.com"
+              error={errors.society?.email?.message}
+              disabled={isLoading}
+            />
+            <Input
+              {...register('society.phone', {
+                onChange: (e) => handlePhoneChange(e, 'society.phone'),
+              })}
+              label="Society Phone"
+              placeholder="+91 0000000000"
+              maxLength={14}
+              error={errors.society?.phone?.message}
+              disabled={isLoading}
+            />
+            <Input
+              {...register('society.totalFlats')}
+              label="Total Flats"
+              type="number"
+              placeholder="100"
+              error={errors.society?.totalFlats?.message}
+              disabled={isLoading}
+            />
           </div>
         </div>
 
@@ -159,21 +203,60 @@ export const OnboardSocietyForm = ({ onSuccess }: OnboardSocietyFormProps) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input {...register('admin.firstName')} label="First Name" placeholder="John" error={errors.admin?.firstName?.message} disabled={isLoading} />
-            <Input {...register('admin.lastName')} label="Last Name" placeholder="Doe" error={errors.admin?.lastName?.message} disabled={isLoading} />
+            <Input
+              {...register('admin.firstName')}
+              label="First Name"
+              placeholder="John"
+              error={errors.admin?.firstName?.message}
+              disabled={isLoading}
+            />
+            <Input
+              {...register('admin.lastName')}
+              label="Last Name"
+              placeholder="Doe"
+              error={errors.admin?.lastName?.message}
+              disabled={isLoading}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input {...register('admin.email')} label="Admin Email" type="email" placeholder="admin@greenvalley.com" error={errors.admin?.email?.message} disabled={isLoading} />
-            <Input {...register('admin.phoneNumber', { onChange: (e) => handlePhoneChange(e, 'admin.phoneNumber') })} label="Admin Phone" placeholder="+91 0000000000" maxLength={14} error={errors.admin?.phoneNumber?.message} disabled={isLoading} />
+            <Input
+              {...register('admin.email')}
+              label="Admin Email"
+              type="email"
+              placeholder="admin@greenvalley.com"
+              error={errors.admin?.email?.message}
+              disabled={isLoading}
+            />
+            <Input
+              {...register('admin.phoneNumber', {
+                onChange: (e) => handlePhoneChange(e, 'admin.phoneNumber'),
+              })}
+              label="Admin Phone"
+              placeholder="+91 0000000000"
+              maxLength={14}
+              error={errors.admin?.phoneNumber?.message}
+              disabled={isLoading}
+            />
           </div>
 
-          <Input {...register('admin.password')} label="Admin Password" type="password" placeholder="••••••••" error={errors.admin?.password?.message} disabled={isLoading} />
+          <Input
+            {...register('admin.password')}
+            label="Admin Password"
+            type="password"
+            placeholder="••••••••"
+            error={errors.admin?.password?.message}
+            disabled={isLoading}
+          />
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">
-          <Button type="button" variant="outline" onClick={() => reset()} disabled={isLoading}>Reset</Button>
-          <Button type="submit" isLoading={isLoading}>Onboard Society</Button>
+          <Button type="button" variant="outline" onClick={() => reset()} disabled={isLoading}>
+            Reset
+          </Button>
+          <Button type="submit" isLoading={isLoading}>
+            Onboard Society
+          </Button>
         </div>
       </form>
     </div>

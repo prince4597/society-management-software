@@ -13,11 +13,27 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading, leftIcon, rightIcon, children, disabled, ...props }, ref) => {
+  (
+    {
+      className,
+      variant = 'primary',
+      size = 'md',
+      isLoading,
+      leftIcon,
+      rightIcon,
+      children,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     const variants = {
-      primary: 'bg-primary text-primary-foreground border-b-2 border-primary/20 hover:bg-primary/95',
-      secondary: 'bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80',
-      outline: 'bg-transparent border border-border text-foreground hover:bg-secondary hover:text-primary transition-colors',
+      primary:
+        'bg-primary text-primary-foreground border-b-2 border-primary/20 hover:bg-primary/95',
+      secondary:
+        'bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80',
+      outline:
+        'bg-transparent border border-border text-foreground hover:bg-secondary hover:text-primary transition-colors',
       ghost: 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary',
       danger: 'bg-danger text-danger-foreground border-b-2 border-danger/20 hover:bg-danger/95',
     };
@@ -40,7 +56,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...props}
       >
-        <div className={cn("flex items-center justify-center gap-2", isLoading && "opacity-0")}>
+        <div className={cn('flex items-center justify-center gap-2', isLoading && 'opacity-0')}>
           {leftIcon && <span className="w-3.5 h-3.5 shrink-0 opacity-80">{leftIcon}</span>}
           {children}
           {rightIcon && <span className="w-3.5 h-3.5 shrink-0 opacity-80">{rightIcon}</span>}

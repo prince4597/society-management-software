@@ -17,8 +17,14 @@ export const createSocietySchema = z.object({
       state: z.string().min(2, 'State is required'),
       country: z.string().default('India'),
       zipCode: z.string().min(4, 'ZIP code is required'),
-      email: z.string().email('Invalid email').optional(),
-      phone: z.string().optional(),
+      email: z.preprocess(
+        (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+        z.string().email('Invalid email').optional()
+      ),
+      phone: z.preprocess(
+        (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+        z.string().optional()
+      ),
       totalFlats: z.number().int().min(0).default(0),
     }),
     admin: z.object({
@@ -39,8 +45,14 @@ export const updateSocietySchema = z.object({
     state: z.string().min(2).optional(),
     country: z.string().optional(),
     zipCode: z.string().min(4).optional(),
-    email: z.string().email().optional(),
-    phone: z.string().optional(),
+    email: z.preprocess(
+      (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+      z.string().email('Invalid email').optional()
+    ),
+    phone: z.preprocess(
+      (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+      z.string().optional()
+    ),
     totalFlats: z.number().int().min(0).optional(),
     isActive: z.boolean().optional(),
   }),

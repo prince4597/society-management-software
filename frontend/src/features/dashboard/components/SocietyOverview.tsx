@@ -1,6 +1,18 @@
-import { Building2, Users, ClipboardList, TrendingUp, AlertCircle, LucideIcon, ArrowRight } from 'lucide-react';
+'use client';
+
+import {
+  Building2,
+  MapPin,
+  TrendingUp,
+  AlertCircle,
+  LucideIcon,
+  ArrowRight,
+  Loader2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Badge, Card } from '@/components/ui';
+import { useSocietyProfile } from '../../societies/hooks/useSocietyProfile';
+import Link from 'next/link';
 
 const OperationalMetric = ({
   icon: Icon,
@@ -8,14 +20,14 @@ const OperationalMetric = ({
   value,
   trend,
   status,
-  variant = 'neutral'
+  variant = 'neutral',
 }: {
-  icon: LucideIcon,
-  label: string,
-  value: string,
-  trend: string,
-  status?: string,
-  variant?: 'success' | 'warning' | 'error' | 'neutral'
+  icon: LucideIcon;
+  label: string;
+  value: string | number;
+  trend: string;
+  status?: string;
+  variant?: 'success' | 'warning' | 'error' | 'neutral' | 'info';
 }) => (
   <div className="flex items-center justify-between p-3.5 bg-card/50 hover:bg-secondary/30 rounded-lg border border-border/50 transition-colors group cursor-pointer">
     <div className="flex items-center gap-3">
@@ -23,83 +35,115 @@ const OperationalMetric = ({
         <Icon size={14} />
       </div>
       <div>
-        <p className="text-[9px] text-muted-foreground font-bold tracking-widest uppercase leading-none mb-1.5">{label}</p>
+        <p className="text-[9px] text-muted-foreground font-bold tracking-widest uppercase leading-none mb-1.5">
+          {label}
+        </p>
         <div className="flex items-center gap-2">
           <p className="text-sm font-bold text-foreground leading-none">{value}</p>
           {status && (
-            <Badge variant={variant as any} size="sm" className="font-bold tracking-wide">
+            <Badge variant={variant} size="sm" className="font-bold tracking-wide">
               {status}
             </Badge>
           )}
         </div>
       </div>
     </div>
-    <div className={cn(
-      "flex items-center gap-1 font-bold text-[10px] tabular-nums px-2 py-0.5 rounded-full bg-secondary/20",
-      trend.startsWith('+') || trend.includes('High') ? "text-success" : "text-muted-foreground"
-    )}>
+    <div
+      className={cn(
+        'flex items-center gap-1 font-bold text-[10px] tabular-nums px-2 py-0.5 rounded-full bg-secondary/20',
+        trend.startsWith('+') || trend.includes('High') || trend.includes('Active')
+          ? 'text-success'
+          : 'text-muted-foreground'
+      )}
+    >
       {trend}
     </div>
   </div>
 );
 
 export const SocietyOverview = () => {
+  const { society, isLoading } = useSocietyProfile();
+
+  if (isLoading) {
+    return (
+      <Card className="overflow-hidden bg-card/30 border-border/40 p-12 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          Hydrating Records...
+        </p>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="overflow-hidden bg-card/30 border-border/40">
-      <div className="p-5 border-b border-border/50 flex items-center justify-between bg-secondary/5">
+    <Card className="bg-card border border-border shadow-sm overflow-hidden group">
+      <div className="p-6 border-b border-border/50 flex items-center justify-between bg-secondary/20">
         <div>
-          <h3 className="text-xs font-bold text-foreground uppercase tracking-[0.1em]">Management Overview</h3>
-          <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Real-time operational status</p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <h3 className="text-[10px] font-bold text-foreground uppercase tracking-[0.15em] leading-none">
+              Verified Property
+            </h3>
+          </div>
+          <p className="text-sm font-bold text-foreground truncate max-w-[180px]">
+            {society?.name || 'Loading data...'}
+          </p>
         </div>
-        <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center border border-primary/20">
-          <Building2 size={16} className="text-primary" />
+        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20 text-primary">
+          <Building2 size={20} />
         </div>
       </div>
 
-      <div className="p-4 space-y-2">
-        <OperationalMetric
-          icon={Building2}
-          label="Unit Occupancy"
-          value="1,280 Units"
-          status="94.2%"
-          variant="success"
-          trend="+8% LY"
-        />
-        <OperationalMetric
-          icon={Users}
-          label="Active Visitor Load"
-          value="18 Active"
-          status="Peak"
-          variant="warning"
-          trend="+12% today"
-        />
-        <OperationalMetric
-          icon={ClipboardList}
-          label="Pending Maintenance"
-          value="4 High Priority"
-          status="Action Required"
-          variant="error"
-          trend="84% Resolve"
-        />
+      <div className="p-6 space-y-4">
+        <div className="space-y-3">
+          <OperationalMetric
+            icon={Building2}
+            label="Registry ID"
+            value={society?.code || '---'}
+            status="ACTIVE"
+            variant="success"
+            trend="Official"
+          />
+          <OperationalMetric
+            icon={TrendingUp}
+            label="Inventory Hub"
+            value={`${society?.totalFlats || 0} Units`}
+            status="Sync"
+            variant="info"
+            trend="Real-time"
+          />
+          <OperationalMetric
+            icon={MapPin}
+            label="Regional HQ"
+            value={society?.city || '---'}
+            status={society?.state}
+            variant="neutral"
+            trend={society?.zipCode || '---'}
+          />
+        </div>
 
-        <div className="mt-4 p-3 rounded bg-secondary/20 border border-border/50 flex gap-3 items-start">
+        <div className="mt-6 p-4 rounded-xl bg-secondary/20 border border-border/50 flex gap-3 items-start">
           <div className="mt-0.5">
-            <AlertCircle className="text-amber-500" size={14} />
+            <AlertCircle className="text-warning" size={14} strokeWidth={2.5} />
           </div>
           <div>
-            <h5 className="text-[10px] font-bold text-foreground uppercase tracking-widest mb-1">System Advisory</h5>
-            <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
-              Fire inspection scheduled for <span className="text-foreground font-bold">Block C</span> tomorrow at 14:00. Ensure all access corridors are cleared.
+            <h5 className="text-[10px] font-bold text-foreground uppercase tracking-widest mb-1">
+              Registered HQ
+            </h5>
+            <p className="text-[11px] text-muted-foreground leading-relaxed font-semibold">
+              {society?.address || 'Property verification pending...'}
             </p>
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          className="w-full mt-4 gap-2 text-[10px] uppercase font-bold tracking-widest h-9 bg-secondary/10 border-border/50 hover:bg-secondary/20"
-        >
-          View Full schedule <ArrowRight size={14} />
-        </Button>
+        <Link href="/dashboard/society/profile" className="block w-full pt-2">
+          <Button
+            variant="outline"
+            className="w-full rounded-xl gap-2 text-[10px] uppercase font-bold tracking-widest h-10 border-border hover:bg-secondary transition-all"
+          >
+            Access Core Profile <ArrowRight size={14} />
+          </Button>
+        </Link>
       </div>
     </Card>
   );

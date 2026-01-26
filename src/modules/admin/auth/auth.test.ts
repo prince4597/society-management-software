@@ -8,6 +8,7 @@ import { TestFactory } from '../../../tests/factory';
 import { validate } from '../../../middleware/validate.middleware';
 import { errorHandler } from '../../../middleware/error.middleware';
 import { ApiResponse } from '../../../types';
+import { RoleName } from '../../../constants/roles';
 
 jest.mock('../../../utils/jwt', () => ({
   signToken: jest.fn().mockReturnValue('mocked-token'),
@@ -32,10 +33,10 @@ describe('Admin Auth Module (Integration)', () => {
 
   beforeEach(async () => {
     await TestFactory.clearAll();
-    const role = await TestFactory.createRole({ name: 'SUPER_ADMIN' });
-    testAdmin = await TestFactory.createAdmin(role.id, {
+    testAdmin = await TestFactory.createAdmin({
       email: 'admin@example.com',
       password: 'password123',
+      role: RoleName.SUPER_ADMIN,
     });
 
     app = express();

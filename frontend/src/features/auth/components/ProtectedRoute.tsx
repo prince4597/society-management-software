@@ -4,10 +4,11 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { PremiumSplash } from '@/components/ui';
+import { RoleName } from '@/types';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRole?: 'SUPER_ADMIN' | 'SOCIETY_ADMIN';
+  allowedRole?: RoleName;
 }
 
 export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) => {
@@ -21,7 +22,7 @@ export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) =
     } else if (status === 'authenticated' && user) {
       if (allowedRole && user.role !== allowedRole) {
         // Redirect if role doesn't match
-        const redirectPath = user.role === 'SUPER_ADMIN' ? '/super-admin' : '/dashboard';
+        const redirectPath = user.role === RoleName.SUPER_ADMIN ? '/super-admin' : '/dashboard';
         if (pathname !== redirectPath) {
           router.replace(redirectPath);
         }

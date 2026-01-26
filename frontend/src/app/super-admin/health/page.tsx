@@ -8,7 +8,7 @@ export default function HealthPage() {
       <section aria-label="System Infrastructure">
         <SystemHealthCard />
       </section>
-      
+
       <section aria-label="Global Metrics">
         <GlobalMetrics />
       </section>

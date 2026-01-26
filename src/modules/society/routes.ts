@@ -3,6 +3,7 @@ import { societyController } from './controller';
 import { createSocietySchema, updateSocietySchema, societyIdParamSchema } from './dto';
 import { validate } from '../../middleware/validate.middleware';
 import { authenticate, authorize } from '../../middleware/auth.middleware';
+import { RoleName } from '../../constants/roles';
 
 const router = Router();
 
@@ -61,7 +62,7 @@ const router = Router();
 router.post(
   '/',
   authenticate,
-  authorize(['SUPER_ADMIN']),
+  authorize([RoleName.SUPER_ADMIN]),
   validate({ body: createSocietySchema.shape.body }),
   societyController.onboard
 );
@@ -78,7 +79,7 @@ router.post(
  *       200:
  *         description: List of societies
  */
-router.get('/', authenticate, authorize(['SUPER_ADMIN']), societyController.findAll);
+router.get('/', authenticate, authorize([RoleName.SUPER_ADMIN]), societyController.findAll);
 
 /**
  * @swagger
@@ -104,7 +105,7 @@ router.get('/', authenticate, authorize(['SUPER_ADMIN']), societyController.find
 router.get(
   '/:id',
   authenticate,
-  authorize(['SUPER_ADMIN']),
+  authorize([RoleName.SUPER_ADMIN]),
   validate({ params: societyIdParamSchema.shape.params }),
   societyController.findById
 );
@@ -145,7 +146,7 @@ router.get(
 router.patch(
   '/:id',
   authenticate,
-  authorize(['SUPER_ADMIN']),
+  authorize([RoleName.SUPER_ADMIN]),
   validate({ params: societyIdParamSchema.shape.params, body: updateSocietySchema.shape.body }),
   societyController.update
 );
@@ -174,9 +175,24 @@ router.patch(
 router.get(
   '/:id/admins',
   authenticate,
-  authorize(['SUPER_ADMIN']),
+  authorize([RoleName.SUPER_ADMIN]),
   validate({ params: societyIdParamSchema.shape.params }),
   societyController.getAdmins
+);
+
+router.get(
+  '/profile/me',
+  authenticate,
+  authorize([RoleName.SOCIETY_ADMIN]),
+  societyController.findMySociety
+);
+
+router.patch(
+  '/profile/me',
+  authenticate,
+  authorize([RoleName.SOCIETY_ADMIN]),
+  validate({ body: updateSocietySchema.shape.body }),
+  societyController.updateMySociety
 );
 
 export const societyRoutes = router;

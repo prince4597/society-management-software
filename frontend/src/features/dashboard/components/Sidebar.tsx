@@ -14,8 +14,8 @@ export const Sidebar = (props: SidebarProps) => {
     <BaseSidebar
       {...props}
       quickAction={{
-        label: "Quick Action",
-        href: "#"
+        label: 'Quick Action',
+        href: '#',
       }}
     />
   );

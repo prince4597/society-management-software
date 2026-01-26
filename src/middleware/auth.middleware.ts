@@ -2,12 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { UnauthorizedError, ForbiddenError } from './errors';
 import { verifyToken } from '../utils/jwt';
 
-interface TokenPayload {
-  id: string;
-  role: string;
-  email: string;
-}
-
 export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
   try {
     let token: string | undefined = (req.cookies as Record<string, string>)?.token;
@@ -23,7 +17,7 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction): 
       throw new UnauthorizedError('Authentication required');
     }
 
-    const payload = verifyToken(token) as TokenPayload;
+    const payload = verifyToken(token);
 
     req.user = payload;
     next();

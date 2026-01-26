@@ -1,12 +1,12 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import bcrypt from 'bcrypt';
 import { sequelize } from '../config/database';
-import Role from './role.model';
 import Society from './society.model';
+import { RoleName, VALID_ROLES } from '../constants/roles';
 
 interface AdminAttributes {
   id: string;
-  roleId: string;
+  role: string;
   societyId?: string;
   firstName: string;
   lastName: string;
@@ -25,7 +25,7 @@ export interface AdminCreationAttributes extends Optional<AdminAttributes, 'id' 
 
 class Admin extends Model<AdminAttributes, AdminCreationAttributes> implements AdminAttributes {
   declare id: string;
-  declare roleId: string;
+  declare role: string;
   declare societyId?: string;
   declare firstName: string;
   declare lastName: string;
@@ -39,8 +39,6 @@ class Admin extends Model<AdminAttributes, AdminCreationAttributes> implements A
   declare readonly updatedAt: Date;
   declare readonly deletedAt?: Date;
 
-  // Associations
-  declare readonly role?: Role;
   declare readonly society?: Society;
 }
 
@@ -51,10 +49,12 @@ Admin.init(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    roleId: {
-      type: DataTypes.UUID,
+    role: {
+      type: DataTypes.STRING,
       allowNull: false,
-      field: 'role_id',
+      validate: {
+        isIn: [VALID_ROLES],
+      },
     },
     societyId: {
       type: DataTypes.UUID,
@@ -108,6 +108,28 @@ Admin.init(
     timestamps: true,
     paranoid: true,
     hooks: {
+      beforeValidate: (admin: Admin) => {
+        // Business Logic Consistency Checks
+        if (admin.role === (RoleName.SUPER_ADMIN as string)) {
+          if (admin.societyId) {
+            throw new Error('Super Admin cannot be assigned to a society');
+          }
+        } else if (admin.role === (RoleName.SOCIETY_ADMIN as string)) {
+          if (!admin.societyId) {
+            throw new Error('Society Admin must be assigned to a society');
+          }
+        }
+      },
+      beforeCreate: async (admin: Admin) => {
+        if (admin.role === (RoleName.SUPER_ADMIN as string)) {
+          const count = await (admin.constructor as typeof Admin).count({
+            where: { role: RoleName.SUPER_ADMIN as string },
+          });
+          if (count > 0) {
+            throw new Error('Only one Super Admin is allowed in the system');
+          }
+        }
+      },
       beforeSave: async (admin: Admin) => {
         if (admin.changed('password')) {
           admin.password = await bcrypt.hash(admin.password, 10);
@@ -116,10 +138,6 @@ Admin.init(
     },
   }
 );
-
-// Define Associations
-Admin.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
-Role.hasMany(Admin, { foreignKey: 'roleId', as: 'admins' });
 
 Admin.belongsTo(Society, { foreignKey: 'societyId', as: 'society' });
 Society.hasMany(Admin, { foreignKey: 'societyId', as: 'admins' });

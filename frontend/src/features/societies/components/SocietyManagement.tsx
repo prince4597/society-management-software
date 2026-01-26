@@ -2,9 +2,21 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Building2, Plus, Search, MapPin, Users, Activity, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, Pagination, TableLoading, TableEmpty } from '@/components/ui';
+import {
+  Button,
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+  Pagination,
+  TableLoading,
+  TableEmpty,
+} from '@/components/ui';
 import { useSocieties } from '../hooks/useSocieties';
 import { OnboardSocietyForm } from './OnboardSocietyForm';
+import { cn } from '@/lib/utils';
 
 export const SocietyManagement = () => {
   const [showOnboardForm, setShowOnboardForm] = useState(false);
@@ -17,7 +29,7 @@ export const SocietyManagement = () => {
     currentPage,
     setCurrentPage,
     totalPages,
-    refresh
+    refresh,
   } = useSocieties({ itemsPerPage: 8 });
 
   const itemsPerPage = 8;
@@ -27,13 +39,17 @@ export const SocietyManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-foreground tracking-tight">Society Management</h2>
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">Institutional Registry of managed communities</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">
+            Institutional Registry of managed communities
+          </p>
         </div>
         <Button
           onClick={() => setShowOnboardForm(!showOnboardForm)}
           className="rounded-xl font-bold gap-2 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
         >
-          {showOnboardForm ? 'View Registry' : (
+          {showOnboardForm ? (
+            'View Registry'
+          ) : (
             <>
               <Plus size={18} />
               Onboard New Society
@@ -50,10 +66,12 @@ export const SocietyManagement = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <OnboardSocietyForm onSuccess={() => {
-              setShowOnboardForm(false);
-              refresh();
-            }} />
+            <OnboardSocietyForm
+              onSuccess={() => {
+                setShowOnboardForm(false);
+                refresh();
+              }}
+            />
           </motion.div>
         ) : (
           <motion.div
@@ -63,7 +81,10 @@ export const SocietyManagement = () => {
             className="space-y-6"
           >
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"
+                size={18}
+              />
               <input
                 type="text"
                 placeholder="Filter by name, code, or city..."
@@ -102,8 +123,12 @@ export const SocietyManagement = () => {
                               <Building2 size={20} />
                             </div>
                             <div>
-                              <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{society.name}</p>
-                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">{society.email || 'No email'}</p>
+                              <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">
+                                {society.name}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
+                                {society.email || 'No email'}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
@@ -121,8 +146,18 @@ export const SocietyManagement = () => {
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="inline-flex items-center gap-1.5">
-                            <div className={cn("w-1.5 h-1.5 rounded-full", society.isActive ? "bg-success animate-pulse" : "bg-destructive")} />
-                            <span className={cn("text-[10px] font-black uppercase tracking-widest", society.isActive ? "text-success" : "text-destructive")}>
+                            <div
+                              className={cn(
+                                'w-1.5 h-1.5 rounded-full',
+                                society.isActive ? 'bg-success animate-pulse' : 'bg-destructive'
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                'text-[10px] font-black uppercase tracking-widest',
+                                society.isActive ? 'text-success' : 'text-destructive'
+                              )}
+                            >
                               {society.isActive ? 'Active' : 'Inactive'}
                             </span>
                           </div>
@@ -147,7 +182,11 @@ export const SocietyManagement = () => {
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                     Showing {pagedSocieties.length} of {totalCount} Societies
                   </p>
-                  <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
                 </div>
               )}
             </div>
@@ -157,5 +196,3 @@ export const SocietyManagement = () => {
     </div>
   );
 };
-
-import { cn } from '@/lib/utils';

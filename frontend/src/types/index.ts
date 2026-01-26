@@ -1,6 +1,11 @@
 export type Nullable<T> = T | null;
 export type Optional<T> = T | undefined;
 
+export enum RoleName {
+  SUPER_ADMIN = 'Super Admin',
+  SOCIETY_ADMIN = 'Society Admin',
+}
+
 // --- Domain Entities ---
 
 export interface AdminUser {
@@ -10,6 +15,10 @@ export interface AdminUser {
   email: string;
   phoneNumber: string;
   role: string;
+  society?: {
+    id: string;
+    name: string;
+  };
   isActive: boolean;
   lastLogin: string | null;
 }

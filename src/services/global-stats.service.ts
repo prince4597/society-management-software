@@ -1,18 +1,20 @@
-import { Admin, Role, Society } from '../models';
+import { Admin, Society } from '../models';
 import { logger } from '../utils/logger';
 import { socketManager } from '../core/socket';
 import { createSingleton } from '../core/singleton';
+import { VALID_ROLES } from '../constants/roles';
 import type { GlobalStats } from '../types/shared';
 
 class GlobalStatsService {
   async getStats(): Promise<GlobalStats> {
     try {
-      const [adminCount, roleCount, societyCount, totalFlats] = await Promise.all([
+      const [adminCount, societyCount, totalFlats] = await Promise.all([
         Admin.count(),
-        Role.count(),
         Society.count(),
         Society.sum('totalFlats'),
       ]);
+
+      const roleCount = VALID_ROLES.length;
 
       return {
         totalAdmins: adminCount,

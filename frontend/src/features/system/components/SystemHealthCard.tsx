@@ -69,12 +69,14 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
     const bootDate = new Date(referenceTime - uptimeSeconds * 1000);
     const day = bootDate.getDate();
     const month = bootDate.toLocaleString('en-US', { month: 'short' });
-    const time = bootDate.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    }).replace(/^0/, '');
+    const time = bootDate
+      .toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      })
+      .replace(/^0/, '');
 
     return `${day} ${month}, ${time}`;
   };
@@ -99,36 +101,47 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
         <div className="relative z-10">
           <h3 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
             System Infrastructure
-            <div className={cn(
-              "w-2 h-2 rounded-full",
-              isConnected ? "bg-success animate-pulse" : "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]"
-            )} />
+            <div
+              className={cn(
+                'w-2 h-2 rounded-full',
+                isConnected
+                  ? 'bg-success animate-pulse'
+                  : 'bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+              )}
+            />
           </h3>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">
             Real-time Monitoring • v{health.version} • {health.system.platform}
           </p>
         </div>
         <div className="flex items-center gap-3 relative z-10 self-start md:self-center">
-          <div className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border transition-all duration-300",
-            isConnected
-              ? "bg-success/10 text-success border-success/20"
-              : "bg-destructive/10 text-destructive border-destructive/20"
-          )}>
-            {isConnected ? <Wifi size={12} className={cn(isUpdating && "animate-bounce")} /> : <WifiOff size={12} />}
-            {isConnected ? "Live Stream" : "Disconnected"}
+          <div
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border transition-all duration-300',
+              isConnected
+                ? 'bg-success/10 text-success border-success/20'
+                : 'bg-destructive/10 text-destructive border-destructive/20'
+            )}
+          >
+            {isConnected ? (
+              <Wifi size={12} className={cn(isUpdating && 'animate-bounce')} />
+            ) : (
+              <WifiOff size={12} />
+            )}
+            {isConnected ? 'Live Stream' : 'Disconnected'}
           </div>
-          <div className={cn(
-            "p-2.5 bg-primary/10 rounded-xl shadow-inner transition-transform duration-300",
-            isUpdating && "scale-110"
-          )}>
+          <div
+            className={cn(
+              'p-2.5 bg-primary/10 rounded-xl shadow-inner transition-transform duration-300',
+              isUpdating && 'scale-110'
+            )}
+          >
             <Zap className="text-primary" size={20} />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-
         {/* Memory Load */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -136,19 +149,21 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
               <HardDrive size={16} className="text-blue-500" />
               <span>Memory Usage</span>
             </div>
-            <span className="font-bold text-foreground font-mono">{health.checks.memory.percentage}%</span>
+            <span className="font-bold text-foreground font-mono">
+              {health.checks.memory.percentage}%
+            </span>
           </div>
           <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden">
             <motion.div
               initial={false}
               animate={{ width: `${health.checks.memory.percentage}%` }}
               className={cn(
-                "h-full rounded-full transition-all duration-700 ease-out",
-                health.checks.memory.percentage > 90 
-                  ? "bg-danger" 
-                  : health.checks.memory.percentage > 75 
-                    ? "bg-warning" 
-                    : "bg-info"
+                'h-full rounded-full transition-all duration-700 ease-out',
+                health.checks.memory.percentage > 90
+                  ? 'bg-danger'
+                  : health.checks.memory.percentage > 75
+                    ? 'bg-warning'
+                    : 'bg-info'
               )}
             />
           </div>
@@ -167,7 +182,7 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
             </div>
             <div className="flex gap-1.5 items-center">
               {health.system.loadAvg.map((load, i) => (
-                <span key={i} className={cn("font-bold font-mono text-xs", getLoadColor(load))}>
+                <span key={i} className={cn('font-bold font-mono text-xs', getLoadColor(load))}>
                   {load.toFixed(1)}
                 </span>
               ))}
@@ -181,7 +196,10 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
               {health.system.cpus} Cores
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground font-medium italic truncate" title={health.system.cpuModel}>
+          <p
+            className="text-[10px] text-muted-foreground font-medium italic truncate"
+            title={health.system.cpuModel}
+          >
             {health.system.cpuModel}
           </p>
         </div>
@@ -193,13 +211,17 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
               <Wifi size={16} className="text-success" />
               <span>Active Sockets</span>
             </div>
-            <span className="font-bold text-foreground font-mono">{health.sockets.totalConnections}</span>
+            <span className="font-bold text-foreground font-mono">
+              {health.sockets.totalConnections}
+            </span>
           </div>
           <div className="flex items-center gap-2 mb-2">
             <div className="h-1 flex-1 bg-secondary/50 rounded-full overflow-hidden">
               <motion.div
                 initial={false}
-                animate={{ width: `${Math.min((health.sockets.totalConnections / 100) * 100, 100)}%` }}
+                animate={{
+                  width: `${Math.min((health.sockets.totalConnections / 100) * 100, 100)}%`,
+                }}
                 className="h-full bg-success rounded-full"
               />
             </div>
@@ -223,7 +245,9 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
               <Clock size={16} className="text-primary" />
               <span>Engine Status</span>
             </div>
-            <span className="text-[9px] text-success font-black uppercase px-2 py-0.5 bg-success/10 rounded-md border border-success/20 animate-pulse">Running</span>
+            <span className="text-[9px] text-success font-black uppercase px-2 py-0.5 bg-success/10 rounded-md border border-success/20 animate-pulse">
+              Running
+            </span>
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-black text-foreground tracking-tight tabular-nums leading-none">
@@ -236,7 +260,9 @@ export const SystemHealthCard = ({ initialData }: SystemHealthCardProps) => {
           <div className="flex flex-col gap-1 text-[10px] text-muted-foreground font-medium italic border-t border-border/40 pt-2">
             <div className="flex justify-between">
               <span>Active Duration:</span>
-              <span className="font-mono font-bold text-primary">{formatDuration(health.uptime)}</span>
+              <span className="font-mono font-bold text-primary">
+                {formatDuration(health.uptime)}
+              </span>
             </div>
           </div>
         </div>

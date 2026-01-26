@@ -37,10 +37,38 @@ export const GlobalMetrics = ({ initialData }: GlobalMetricsProps) => {
   }, [on, isConnected]);
 
   const displayMetrics = [
-    { label: 'Total Societies', value: stats?.totalSocieties ?? '...', growth: '+3', icon: Building2, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Active Admins', value: stats?.totalAdmins ?? '...', growth: 'Live', icon: UserCheck, color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Network Load', value: isConnected ? `${stats?.activeConnections ?? '0'} Sockets` : 'Offline', growth: 'Stable', icon: Activity, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: 'Total Users', value: stats?.totalUsers ?? '...', growth: '+210', icon: Users, color: 'text-warning', bg: 'bg-warning/10' },
+    {
+      label: 'Total Societies',
+      value: stats?.totalSocieties ?? '...',
+      growth: '+3',
+      icon: Building2,
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+    },
+    {
+      label: 'Active Admins',
+      value: stats?.totalAdmins ?? '...',
+      growth: 'Live',
+      icon: UserCheck,
+      color: 'text-success',
+      bg: 'bg-success/10',
+    },
+    {
+      label: 'Network Load',
+      value: isConnected ? `${stats?.activeConnections ?? '0'} Sockets` : 'Offline',
+      growth: 'Stable',
+      icon: Activity,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+    },
+    {
+      label: 'Total Users',
+      value: stats?.totalUsers ?? '...',
+      growth: '+210',
+      icon: Users,
+      color: 'text-warning',
+      bg: 'bg-warning/10',
+    },
   ];
 
   return (
@@ -59,7 +87,7 @@ export const GlobalMetrics = ({ initialData }: GlobalMetricsProps) => {
           </div>
 
           <div className="flex justify-between items-start mb-5 relative z-10">
-            <div className={cn("p-3 rounded-xl shadow-inner transition-colors", stat.bg)}>
+            <div className={cn('p-3 rounded-xl shadow-inner transition-colors', stat.bg)}>
               <stat.icon size={22} className={stat.color} />
             </div>
             <div className="flex items-center gap-1 text-[10px] font-bold text-success bg-success/10 px-2.5 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-success/20">
@@ -67,7 +95,9 @@ export const GlobalMetrics = ({ initialData }: GlobalMetricsProps) => {
               <ArrowUpRight size={12} strokeWidth={3} />
             </div>
           </div>
-          <p className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-widest leading-none relative z-10">{stat.label}</p>
+          <p className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-widest leading-none relative z-10">
+            {stat.label}
+          </p>
           <div className="flex items-baseline gap-1 mt-2 relative z-10">
             <motion.h3
               key={String(stat.value)}

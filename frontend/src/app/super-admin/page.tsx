@@ -43,14 +43,15 @@ export default function SuperAdminPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest animate-pulse">Initializing Global Console...</p>
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest animate-pulse">
+          Initializing Global Console...
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-10 pb-10">
-
       {/* Infrastructure Health - Highest Priority */}
       <section aria-label="System Infrastructure">
         <SystemHealthCard initialData={dashboardData?.health} />
@@ -65,14 +66,15 @@ export default function SuperAdminPage() {
       <section aria-label="Global Metrics">
         <div className="mb-6">
           <h2 className="text-2xl font-black text-foreground tracking-tight">System Performance</h2>
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">Cross-cluster business indicators</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">
+            Cross-cluster business indicators
+          </p>
         </div>
         <GlobalMetrics initialData={dashboardData?.stats} />
       </section>
 
       {/* Live Monitoring & Config Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
         {/* Detailed Audit Trail */}
         <section className="lg:col-span-2" aria-label="System Activity">
           <AuditTrail />
@@ -82,7 +84,6 @@ export default function SuperAdminPage() {
         <section aria-label="Quick Actions">
           <QuickConfig initialData={dashboardData?.configs} />
         </section>
-
       </div>
 
       {/* Visual Footer Polish */}

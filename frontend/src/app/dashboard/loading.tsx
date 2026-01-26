@@ -1,6 +1,5 @@
 'use client';
 
-
 export default function DashboardLoading() {
   return (
     <div className="w-full h-full p-8 space-y-8">

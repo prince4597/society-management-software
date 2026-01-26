@@ -8,12 +8,12 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
-export const Card = ({ 
-  className, 
-  variant = 'flat', 
-  padding = 'md', 
-  children, 
-  ...props 
+export const Card = ({
+  className,
+  variant = 'flat',
+  padding = 'md',
+  children,
+  ...props
 }: CardProps) => {
   const variants = {
     flat: 'bg-card border border-border shadow-sm',
@@ -30,12 +30,7 @@ export const Card = ({
 
   return (
     <div
-      className={cn(
-        'rounded-lg overflow-hidden',
-        variants[variant],
-        paddings[padding],
-        className
-      )}
+      className={cn('rounded-lg overflow-hidden', variants[variant], paddings[padding], className)}
       {...props}
     >
       {children}
@@ -43,20 +38,34 @@ export const Card = ({
   );
 };
 
-export const CardHeader = ({ className, title, subtitle, action, ...props }: any) => (
-  <div className={cn('flex items-center justify-between mb-4 border-b border-border/20 pb-4', className)} {...props}>
+interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+}
+
+export const CardHeader = ({ className, title, subtitle, action, ...props }: CardHeaderProps) => (
+  <div
+    className={cn(
+      'flex items-center justify-between mb-4 border-b border-border/20 pb-4',
+      className
+    )}
+    {...props}
+  >
     <div>
       <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">{title}</h3>
-      {subtitle && <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">{subtitle}</p>}
+      {subtitle && (
+        <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">{subtitle}</p>
+      )}
     </div>
     {action && <div>{action}</div>}
   </div>
 );
 
-export const CardContent = ({ className, ...props }: any) => (
+export const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn('', className)} {...props} />
 );
 
-export const CardFooter = ({ className, ...props }: any) => (
+export const CardFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn('mt-6 pt-4 border-t border-border/40', className)} {...props} />
 );

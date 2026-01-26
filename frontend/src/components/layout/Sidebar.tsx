@@ -1,7 +1,6 @@
 'use client';
 
 import { LogOut, LucideIcon, Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { NavItem } from './NavItem';
 import { Button, ConfirmDialog } from '@/components/ui';
 import { useState } from 'react';
@@ -25,15 +24,14 @@ interface SidebarProps {
   };
 }
 
-export const Sidebar = ({ 
-  isOpen, 
-  onLogout, 
+export const Sidebar = ({
+  onLogout,
   navItems,
   title,
   subtitle,
   logoItem,
   quickAction,
-  logoutConfig
+  logoutConfig,
 }: SidebarProps) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -49,8 +47,16 @@ export const Sidebar = ({
           )}
           {(title || subtitle) && (
             <div>
-              {title && <h2 className="font-bold text-xs tracking-tight text-foreground uppercase">{title}</h2>}
-              {subtitle && <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold leading-none mt-1">{subtitle}</p>}
+              {title && (
+                <h2 className="font-bold text-xs tracking-tight text-foreground uppercase">
+                  {title}
+                </h2>
+              )}
+              {subtitle && (
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold leading-none mt-1">
+                  {subtitle}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -70,14 +76,18 @@ export const Sidebar = ({
               ) : (
                 <Plus className="w-3.5 h-3.5 text-primary" />
               )}
-              <span className="text-[10px] uppercase font-bold tracking-wider">{quickAction.label}</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider">
+                {quickAction.label}
+              </span>
             </Button>
           </Link>
         </div>
       )}
 
       <div className="px-4 mb-2">
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3 ml-2">Navigation</p>
+        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3 ml-2">
+          Navigation
+        </p>
         <nav className="flex-1 space-y-0.5 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => (
             <NavItem key={item.label} {...item} />
@@ -101,8 +111,10 @@ export const Sidebar = ({
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={onLogout}
         variant="danger"
-        title={logoutConfig?.title || "End Session?"}
-        description={logoutConfig?.description || "Confirming will end your current administrative session."}
+        title={logoutConfig?.title || 'End Session?'}
+        description={
+          logoutConfig?.description || 'Confirming will end your current administrative session.'
+        }
         confirmLabel="Logout"
         cancelLabel="Stay Active"
       />

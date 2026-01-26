@@ -1,6 +1,5 @@
 import { Building2, MapPin, Mail, Phone } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Badge, Card } from '@/components/ui';
+import { Badge } from '@/components/ui';
 import type { Society } from '@/types';
 
 interface SocietyHeaderProps {
@@ -19,7 +18,9 @@ export const SocietyHeader = ({ society }: SocietyHeaderProps) => {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge variant="outline" size="sm">{society.code}</Badge>
+                <Badge variant="outline" size="sm">
+                  {society.code}
+                </Badge>
                 <Badge variant={society.isActive ? 'success' : 'error'} size="sm">
                   {society.isActive ? 'Active' : 'Inactive'}
                 </Badge>
@@ -27,7 +28,9 @@ export const SocietyHeader = ({ society }: SocietyHeaderProps) => {
               <h1 className="text-xl font-bold text-foreground tracking-tight">{society.name}</h1>
               <div className="flex items-center gap-1.5 text-muted-foreground text-xs mt-1 font-semibold">
                 <MapPin size={12} className="text-primary/60" />
-                <span>{society.address}, {society.city}, {society.state} {society.zipCode}</span>
+                <span>
+                  {society.address}, {society.city}, {society.state} {society.zipCode}
+                </span>
               </div>
             </div>
           </div>

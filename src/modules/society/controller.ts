@@ -34,6 +34,29 @@ class SocietyController extends BaseController {
     const admins = await societyService.getAdmins(id);
     return this.success(req, res, admins);
   });
+
+  findMySociety = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const societyId = req.user?.societyId;
+    if (!societyId) {
+      return res
+        .status(403)
+        .json({ success: false, message: 'No society associated with this account' });
+    }
+    const society = await societyService.findById(societyId);
+    return this.success(req, res, society);
+  });
+
+  updateMySociety = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const societyId = req.user?.societyId;
+    if (!societyId) {
+      return res
+        .status(403)
+        .json({ success: false, message: 'No society associated with this account' });
+    }
+    const data = req.body as UpdateSocietyInput;
+    const society = await societyService.update(societyId, data);
+    return this.success(req, res, society, 'Society profile updated successfully');
+  });
 }
 
 export const societyController = new SocietyController();

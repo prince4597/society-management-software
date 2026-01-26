@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { superAdminController } from './controller';
 import { authenticate, authorize } from '../../../middleware/auth.middleware';
+import { RoleName } from '../../../constants/roles';
 
 const router = Router();
 
@@ -60,7 +61,7 @@ router.get('/config', superAdminController.getConfigs);
 router.patch(
   '/config',
   authenticate,
-  authorize(['SUPER_ADMIN']),
+  authorize([RoleName.SUPER_ADMIN]),
   superAdminController.updateConfig
 );
 
@@ -85,7 +86,7 @@ router.patch(
 router.post(
   '/societies/:id/admins',
   authenticate,
-  authorize(['SUPER_ADMIN']),
+  authorize([RoleName.SUPER_ADMIN]),
   superAdminController.addAdmin
 );
 
@@ -110,7 +111,7 @@ router.post(
 router.patch(
   '/admins/:id',
   authenticate,
-  authorize(['SUPER_ADMIN']),
+  authorize([RoleName.SUPER_ADMIN]),
   superAdminController.updateAdmin
 );
 
@@ -135,7 +136,7 @@ router.patch(
 router.delete(
   '/admins/:id',
   authenticate,
-  authorize(['SUPER_ADMIN']),
+  authorize([RoleName.SUPER_ADMIN]),
   superAdminController.deleteAdmin
 );
 

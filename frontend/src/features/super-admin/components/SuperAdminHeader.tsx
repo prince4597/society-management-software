@@ -31,16 +31,26 @@ export const SuperAdminHeader = ({ user, onToggleSidebar }: SuperAdminHeaderProp
         <>
           <div className="flex items-center gap-1.5 p-1 bg-secondary/30 rounded-xl border border-border/30 mr-2">
             <ThemeToggle />
-            <button className="p-2 hover:bg-background rounded-lg text-muted-foreground hover:text-foreground transition-all relative group" aria-label="Notifications">
+            <button
+              className="p-2 hover:bg-background rounded-lg text-muted-foreground hover:text-foreground transition-all relative group"
+              aria-label="Notifications"
+            >
               <Bell size={18} />
               <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-primary rounded-full ring-2 ring-background ring-offset-0" />
             </button>
-            <Link href="/super-admin/profile" className="p-2 hover:bg-background rounded-lg text-muted-foreground hover:text-foreground transition-all" title="Settings">
+            <Link
+              href="/super-admin/profile"
+              className="p-2 hover:bg-background rounded-lg text-muted-foreground hover:text-foreground transition-all"
+              title="Settings"
+            >
               <Settings size={18} />
             </Link>
           </div>
 
-          <Link href="/super-admin/profile" className="flex items-center gap-3 p-1 pl-3 hover:bg-secondary/40 rounded-xl transition-all border border-transparent hover:border-border/40 group">
+          <Link
+            href="/super-admin/profile"
+            className="flex items-center gap-3 p-1 pl-3 hover:bg-secondary/40 rounded-xl transition-all border border-transparent hover:border-border/40 group"
+          >
             <div className="hidden lg:block text-right">
               <p className="text-xs font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
                 {user?.firstName} {user?.lastName}

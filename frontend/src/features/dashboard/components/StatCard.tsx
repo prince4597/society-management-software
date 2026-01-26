@@ -1,44 +1,75 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowUpRight, LucideIcon, MoreVertical } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui';
 
 interface StatCardProps {
   label: string;
   value: string;
   growth: string;
   icon: LucideIcon;
-  color: string;
-  bg: string;
+  color: 'primary' | 'success' | 'warning' | 'info' | 'destructive' | string;
   index: number;
 }
 
-export const StatCard = ({ label, value, growth, icon: Icon, color, bg, index }: StatCardProps) => {
+export const StatCard = ({ label, value, growth, icon: Icon, color, index }: StatCardProps) => {
   const isPositive = growth.startsWith('+');
 
+  const colorMap: Record<string, string> = {
+    primary: 'text-primary bg-primary/10',
+    success: 'text-success bg-success/10',
+    warning: 'text-warning bg-warning/10',
+    info: 'text-info bg-info/10',
+    destructive: 'text-destructive bg-destructive/10',
+  };
+
+  const themeClass = colorMap[color] || colorMap.primary;
+
   return (
-    <div className="bg-card border border-border rounded-lg p-5 shadow-sm transition-all hover:border-primary/50 group">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded bg-secondary/50 flex items-center justify-center text-primary border border-border/50">
-          <Icon size={16} />
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.3 }}
+      whileHover={{ y: -2 }}
+      className="bg-card border border-border p-6 rounded-xl shadow-sm hover:border-primary/40 transition-all group"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div
+          className={cn(
+            'w-10 h-10 rounded-lg flex items-center justify-center border border-current/10',
+            themeClass
+          )}
+        >
+          <Icon size={20} strokeWidth={2.5} />
         </div>
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{label}</p>
+        <Badge
+          variant={isPositive ? 'success' : 'error'}
+          size="sm"
+          className="font-bold tracking-tight"
+        >
+          {growth}
+        </Badge>
       </div>
 
       <div className="space-y-1">
-        <h4 className="text-2xl font-bold text-foreground tracking-tight leading-none">{value}</h4>
-        <div className="flex items-center gap-2 mt-2">
-          <span className={cn(
-            "text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-secondary/30 border border-border/50",
-            isPositive ? "text-success" : "text-error"
-          )}>
-            {isPositive ? <ArrowUpRight size={10} strokeWidth={3} /> : null}
-            {growth}
-          </span>
-          <span className="text-[10px] text-muted-foreground font-semibold">vs last month</span>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-2">
+          {label}
+        </p>
+        <h4 className="text-2xl font-bold text-foreground tracking-tight leading-none tabular-nums">
+          {value}
+        </h4>
+        <div className="flex items-center gap-1.5 mt-3">
+          <span className="text-[10px] text-muted-foreground font-semibold">Volume Variance</span>
+          <div className="flex-1 h-[2px] bg-secondary rounded-full overflow-hidden">
+            <div
+              className={cn('h-full rounded-full', themeClass.split(' ')[0].replace('text', 'bg'))}
+              style={{ width: '40%' }}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

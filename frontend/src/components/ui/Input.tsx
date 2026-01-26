@@ -28,9 +28,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             className={cn(
-              "w-full bg-input border border-border rounded-md px-3 h-9 text-xs text-foreground placeholder:text-muted-foreground transition-all focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary disabled:opacity-50 disabled:bg-secondary/10",
-              leftIcon ? "pl-9" : "pl-3",
-              error && "border-danger focus:ring-danger/10 focus:border-danger",
+              'w-full bg-input border border-border rounded-md px-3 h-9 text-xs text-foreground placeholder:text-muted-foreground transition-all focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary disabled:opacity-50 disabled:bg-secondary/10',
+              leftIcon ? 'pl-9' : 'pl-3',
+              error && 'border-danger focus:ring-danger/10 focus:border-danger',
               className
             )}
             {...props}

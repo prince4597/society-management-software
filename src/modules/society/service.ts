@@ -1,12 +1,11 @@
 import { Transaction } from 'sequelize';
 import { sequelize } from '../../config/database';
-import { Society, Admin, Role } from '../../models';
+import { Society, Admin } from '../../models';
 import { logger } from '../../utils/logger';
 import { ConflictError, NotFoundError, BadRequestError } from '../../middleware/errors';
+import { RoleName } from '../../constants/roles';
 import type { CreateSocietyInput, UpdateSocietyInput } from './dto';
 import type { SocietyAttributes } from '../../models/society.model';
-
-const SOCIETY_ADMIN_ROLE_NAME = 'SOCIETY_ADMIN';
 
 export interface OnboardResult {
   society: SocietyAttributes;
@@ -58,13 +57,6 @@ class SocietyService {
       throw new ConflictError(`Admin with phone "${adminData.phoneNumber}" already exists`);
     }
 
-    const societyAdminRole = await Role.findOne({
-      where: { name: SOCIETY_ADMIN_ROLE_NAME, isActive: true },
-    });
-    if (!societyAdminRole) {
-      throw new BadRequestError('Society admin role not found in system');
-    }
-
     const transaction: Transaction = await sequelize.transaction();
 
     const phoneRegex = /^\+\d{2}\s\d{10}$/;
@@ -96,7 +88,7 @@ class SocietyService {
 
       const admin = await Admin.create(
         {
-          roleId: societyAdminRole.id,
+          role: RoleName.SOCIETY_ADMIN,
           societyId: society.id,
           firstName: adminData.firstName.trim(),
           lastName: adminData.lastName.trim(),
@@ -141,7 +133,6 @@ class SocietyService {
           model: Admin,
           as: 'admins',
           attributes: { exclude: ['password'] },
-          include: [{ model: Role, as: 'role', attributes: ['name'] }],
         },
       ],
     });
@@ -151,11 +142,7 @@ class SocietyService {
     }
 
     const societyJson = society.get({ plain: true }) as SocietyAttributes & {
-      admins: Array<
-        Admin & {
-          role?: { name: string };
-        }
-      >;
+      admins: Array<Admin>;
     };
 
     return {
@@ -180,7 +167,7 @@ class SocietyService {
         email: admin.email,
         phoneNumber: admin.phoneNumber,
         isActive: admin.isActive,
-        role: admin.role?.name || 'ADMIN',
+        role: admin.role,
       })),
     };
   }
@@ -204,7 +191,6 @@ class SocietyService {
 
     const admins = await Admin.findAll({
       where: { societyId },
-      include: [{ model: Role, as: 'role', attributes: ['name'] }],
       attributes: { exclude: ['password'] },
     });
 

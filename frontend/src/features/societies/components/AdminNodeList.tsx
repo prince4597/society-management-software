@@ -1,5 +1,5 @@
 import { ShieldCheck, Plus, Power, RotateCcw, Trash2, UserCheck } from 'lucide-react';
-import { Button, EmptyState, Badge, Card } from '@/components/ui';
+import { Button, EmptyState, Badge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import type { AdminUser } from '@/types';
 
@@ -17,12 +17,7 @@ export const AdminNodeList = ({ admins, onAddClick, onAction }: AdminNodeListPro
           <ShieldCheck size={16} className="text-primary" />
           Society Administrators
         </h3>
-        <Button
-          onClick={onAddClick}
-          size="sm"
-          variant="outline"
-          leftIcon={<Plus size={14} />}
-        >
+        <Button onClick={onAddClick} size="sm" variant="outline" leftIcon={<Plus size={14} />}>
           Add New Admin
         </Button>
       </div>
@@ -30,7 +25,10 @@ export const AdminNodeList = ({ admins, onAddClick, onAction }: AdminNodeListPro
       <div className="divide-y divide-border/50">
         {admins && admins.length > 0 ? (
           admins.map((admin) => (
-            <div key={admin.id} className="px-6 py-4 flex items-center justify-between group hover:bg-secondary/10 transition-colors">
+            <div
+              key={admin.id}
+              className="px-6 py-4 flex items-center justify-between group hover:bg-secondary/10 transition-colors"
+            >
               <div className="flex items-center gap-4">
                 <div className="w-9 h-9 rounded bg-primary/10 flex items-center justify-center border border-primary/20 text-primary text-sm font-bold shadow-inner">
                   {admin.firstName.charAt(0)}
@@ -39,7 +37,9 @@ export const AdminNodeList = ({ admins, onAddClick, onAction }: AdminNodeListPro
                   <h4 className="font-bold text-foreground text-sm tracking-tight">
                     {admin.firstName} {admin.lastName}
                   </h4>
-                  <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-tight">{admin.email}</p>
+                  <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-tight">
+                    {admin.email}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-8">
@@ -51,11 +51,13 @@ export const AdminNodeList = ({ admins, onAddClick, onAction }: AdminNodeListPro
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "h-8 w-8 p-0 rounded",
-                      admin.isActive ? "text-danger hover:bg-danger/10" : "text-success hover:bg-success/10"
+                      'h-8 w-8 p-0 rounded',
+                      admin.isActive
+                        ? 'text-danger hover:bg-danger/10'
+                        : 'text-success hover:bg-success/10'
                     )}
                     onClick={() => onAction(admin, 'deactivate')}
-                    title={admin.isActive ? "Deactivate" : "Activate"}
+                    title={admin.isActive ? 'Deactivate' : 'Activate'}
                   >
                     {admin.isActive ? <Power size={16} /> : <RotateCcw size={16} />}
                   </Button>

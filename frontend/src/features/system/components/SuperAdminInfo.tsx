@@ -1,29 +1,31 @@
 'use client';
 
-import { ShieldCheck, Info, Users, ShieldAlert, Cpu } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Info, Users, ShieldAlert, Cpu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const SuperAdminInfo = () => {
   const requirements = [
     {
       icon: Users,
-      title: "Mandatory Availability",
-      description: "At least one Super Admin must always be active to maintain system lineage and root-level oversight.",
-      urgency: "critical"
+      title: 'Mandatory Availability',
+      description:
+        'At least one Super Admin must always be active to maintain system lineage and root-level oversight.',
+      urgency: 'critical',
     },
     {
       icon: ShieldAlert,
-      title: "Access Control",
-      description: "Super Admins hold 'God Mode' permissions. This level of access should be granted only to trusted lead engineers or infrastructure owners.",
-      urgency: "high"
+      title: 'Access Control',
+      description:
+        "Super Admins hold 'God Mode' permissions. This level of access should be granted only to trusted lead engineers or infrastructure owners.",
+      urgency: 'high',
     },
     {
       icon: Cpu,
-      title: "System Stability",
-      description: "The root configuration portal (Global Config) directly impacts all production nodes. Coordinate changes before execution.",
-      urgency: "medium"
-    }
+      title: 'System Stability',
+      description:
+        'The root configuration portal (Global Config) directly impacts all production nodes. Coordinate changes before execution.',
+      urgency: 'medium',
+    },
   ];
 
   return (
@@ -33,8 +35,12 @@ export const SuperAdminInfo = () => {
           <Info size={20} className="text-primary" />
         </div>
         <div>
-          <h3 className="font-bold text-lg tracking-tight text-foreground">Administration Guidelines</h3>
-          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">System Governance & Security</p>
+          <h3 className="font-bold text-lg tracking-tight text-foreground">
+            Administration Guidelines
+          </h3>
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">
+            System Governance & Security
+          </p>
         </div>
       </div>
 
@@ -48,12 +54,16 @@ export const SuperAdminInfo = () => {
               <div className="p-2 bg-card rounded-lg border border-border text-primary shadow-sm">
                 <req.icon size={18} />
               </div>
-              <span className={cn(
-                "text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider",
-                req.urgency === 'critical' ? "bg-danger/10 text-danger border-danger/20" :
-                  req.urgency === 'high' ? "bg-warning/10 text-warning border-warning/20" :
-                    "bg-primary/10 text-primary border-primary/20"
-              )}>
+              <span
+                className={cn(
+                  'text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider',
+                  req.urgency === 'critical'
+                    ? 'bg-danger/10 text-danger border-danger/20'
+                    : req.urgency === 'high'
+                      ? 'bg-warning/10 text-warning border-warning/20'
+                      : 'bg-primary/10 text-primary border-primary/20'
+                )}
+              >
                 {req.urgency}
               </span>
             </div>

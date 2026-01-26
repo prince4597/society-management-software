@@ -9,11 +9,11 @@ module.exports = {
     await queryInterface.bulkInsert('admins', [
       {
         id: '1b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6a',
-        role_id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
+        role: 'Super Admin',
         first_name: 'System',
         last_name: 'Admin',
         email: 'admin@antigravity.com',
-        phone_number: '1234567890',
+        phone_number: '+91 1234567890',
         password: hashedPassword,
         is_active: true,
         created_at: new Date(),

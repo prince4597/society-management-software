@@ -6,6 +6,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { Sidebar, Header } from '@/features/dashboard';
 import { AnimatePresence } from 'framer-motion';
 import { ProtectedRoute } from '@/features/auth';
+import { RoleName } from '@/types';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Control Center', href: '/dashboard' },
@@ -16,24 +17,16 @@ const navItems = [
   { icon: Search, label: 'Visitor Logs', href: '/dashboard/visitors' },
 ];
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <ProtectedRoute allowedRole="SOCIETY_ADMIN">
+    <ProtectedRoute allowedRole={RoleName.SOCIETY_ADMIN}>
       <div className="min-h-screen bg-background text-foreground flex overflow-hidden transition-colors duration-500">
         <AnimatePresence mode="wait">
           {isSidebarOpen && (
-            <Sidebar
-              isOpen={isSidebarOpen}
-              navItems={navItems}
-              onLogout={logout}
-            />
+            <Sidebar isOpen={isSidebarOpen} navItems={navItems} onLogout={logout} />
           )}
         </AnimatePresence>
 

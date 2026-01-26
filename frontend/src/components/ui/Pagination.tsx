@@ -1,13 +1,13 @@
-import * as React from "react"
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "./Button"
+import * as React from 'react';
+import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from './Button';
 
 interface PaginationProps {
-  currentPage: number
-  totalPages: number
-  onPageChange: (page: number) => void
-  className?: string
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  className?: string;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
@@ -16,19 +16,17 @@ export const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
   className,
 }) => {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const visiblePages = pages.filter(p =>
-    p === 1 ||
-    p === totalPages ||
-    (p >= currentPage - 1 && p <= currentPage + 1)
-  )
+  const visiblePages = pages.filter(
+    (p) => p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)
+  );
 
   return (
     <nav
       role="navigation"
       aria-label="pagination"
-      className={cn("flex items-center justify-end space-x-2", className)}
+      className={cn('flex items-center justify-end space-x-2', className)}
     >
       <Button
         variant="outline"
@@ -53,18 +51,15 @@ export const Pagination: React.FC<PaginationProps> = ({
                 </span>
               )}
               <Button
-                variant={currentPage === page ? "primary" : "outline"}
+                variant={currentPage === page ? 'primary' : 'outline'}
                 size="sm"
                 onClick={() => onPageChange(page)}
-                className={cn(
-                  "w-9 h-9 p-0 rounded-lg",
-                  currentPage === page && "font-bold"
-                )}
+                className={cn('w-9 h-9 p-0 rounded-lg', currentPage === page && 'font-bold')}
               >
                 {page}
               </Button>
             </React.Fragment>
-          )
+          );
         })}
       </div>
 
@@ -83,5 +78,5 @@ export const Pagination: React.FC<PaginationProps> = ({
         <ChevronRight size={16} className="ml-1" />
       </Button>
     </nav>
-  )
-}
+  );
+};

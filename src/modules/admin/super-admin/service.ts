@@ -1,8 +1,7 @@
-import { Admin, Society, Role } from '../../../models';
+import { Admin, Society } from '../../../models';
 import { NotFoundError, BadRequestError } from '../../../middleware/errors';
 import { logger } from '../../../utils/logger';
-
-const SOCIETY_ADMIN_ROLE_NAME = 'SOCIETY_ADMIN';
+import { RoleName } from '../../../constants/roles';
 
 export interface AdminNodeData {
   email: string;
@@ -42,10 +41,6 @@ class SuperAdminService {
     if (existingAdmin) {
       if (existingAdmin.deletedAt) {
         // Restore and update soft-deleted admin
-        const societyAdminRole = await Role.findOne({
-          where: { name: SOCIETY_ADMIN_ROLE_NAME, isActive: true },
-        });
-
         await existingAdmin.restore();
         await existingAdmin.update({
           firstName,
@@ -53,7 +48,7 @@ class SuperAdminService {
           phoneNumber,
           password,
           societyId,
-          roleId: societyAdminRole?.id || existingAdmin.roleId,
+          role: RoleName.SOCIETY_ADMIN,
           isActive: true,
         });
 
@@ -78,13 +73,6 @@ class SuperAdminService {
       throw new BadRequestError(`Admin with phone "${phoneNumber}" already exists`);
     }
 
-    const societyAdminRole = await Role.findOne({
-      where: { name: SOCIETY_ADMIN_ROLE_NAME, isActive: true },
-    });
-    if (!societyAdminRole) {
-      throw new BadRequestError('Society admin role not found in system');
-    }
-
     const admin = await Admin.create({
       firstName,
       lastName,
@@ -92,7 +80,7 @@ class SuperAdminService {
       phoneNumber,
       password,
       societyId,
-      roleId: societyAdminRole.id,
+      role: RoleName.SOCIETY_ADMIN,
       isActive: true,
     });
 

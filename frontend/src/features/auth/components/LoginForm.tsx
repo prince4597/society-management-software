@@ -20,10 +20,10 @@ export const LoginForm = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    mode: 'onTouched'
+    mode: 'onTouched',
   });
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -119,12 +119,18 @@ export const LoginForm = () => {
 
       <div className="mt-8 pt-6 border-t border-border/30 w-full">
         <div className="grid grid-cols-3 text-center">
-          <button className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 hover:text-primary transition-colors">Compliance</button>
-          <button className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 hover:text-primary transition-colors">Governance</button>
-          <button className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 hover:text-primary transition-colors">Support</button>
+          <button className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 hover:text-primary transition-colors">
+            Compliance
+          </button>
+          <button className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 hover:text-primary transition-colors">
+            Governance
+          </button>
+          <button className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 hover:text-primary transition-colors">
+            Support
+          </button>
         </div>
         <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground/30 text-center mt-6 tabular-nums">
-          © 2026 SOCIETY MANAGEMENT SYSTEMS • CONSOLE V4.2.1
+          © 2026 SOCIETY MANAGEMENT • CONSOLE V5.0.0
         </p>
       </div>
     </div>

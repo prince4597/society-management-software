@@ -10,15 +10,9 @@ module.exports = {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
       },
-      role_id: {
-        type: Sequelize.UUID,
+      role: {
+        type: Sequelize.STRING,
         allowNull: false,
-        references: {
-          model: 'roles',
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'RESTRICT',
       },
       first_name: {
         type: Sequelize.STRING,
