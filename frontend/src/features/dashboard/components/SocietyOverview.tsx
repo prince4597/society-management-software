@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button, Badge, Card } from '@/components/ui';
 import { useSocietyProfile } from '../../societies/hooks/useSocietyProfile';
+import { MOCK_FLATS } from '@/features/properties/data/mockData';
 import Link from 'next/link';
 
 const OperationalMetric = ({
@@ -63,6 +64,7 @@ const OperationalMetric = ({
 
 export const SocietyOverview = () => {
   const { society, isLoading } = useSocietyProfile();
+  const totalUnits = MOCK_FLATS.length;
 
   if (isLoading) {
     return (
@@ -107,10 +109,10 @@ export const SocietyOverview = () => {
           <OperationalMetric
             icon={TrendingUp}
             label="Inventory Hub"
-            value={`${society?.totalFlats || 0} Units`}
-            status="Sync"
+            value={`${totalUnits} Units`}
+            status="Mapped"
             variant="info"
-            trend="Real-time"
+            trend="Active"
           />
           <OperationalMetric
             icon={MapPin}
