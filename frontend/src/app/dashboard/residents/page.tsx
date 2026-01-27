@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { MOCK_RESIDENTS, MOCK_FLATS } from '@/features/properties/data/mockData';
+import { useState, useEffect } from 'react';
+// import { MOCK_RESIDENTS, MOCK_FLATS } from '@/features/properties/data/mockData';
 import { Resident, ResidentRole } from '@/features/residents/types';
+import { Flat } from '@/features/properties/types';
+import { residentApi } from '@/features/residents/api';
+import { propertyApi } from '@/features/properties/api';
 import { ResidentProfileDrawer } from '@/features/residents/components/ResidentProfileDrawer';
 import { RegisterMemberModal } from '@/features/residents/components/RegisterMemberModal';
 import { 
@@ -19,7 +22,8 @@ import {
   TrendingUp,
   ShieldCheck,
   Building,
-  Home
+  Home,
+  Loader2
 } from 'lucide-react';
 import { 
   Button, 
@@ -36,25 +40,64 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ResidentsPage() {
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [flats, setFlats] = useState<Flat[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const filteredResidents = MOCK_RESIDENTS.filter(r => 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [residentsData, flatsData] = await Promise.all([
+        residentApi.findAll(),
+        propertyApi.findAll(),
+      ]);
+      setResidents(residentsData);
+      setFlats(flatsData);
+    } catch (error) {
+      console.error('Failed to fetch residents data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  function getFlatNumbers(resident: Resident) {
+    const ids = [
+      ...(resident.flatIds || []),
+      ...(resident.ownedProperties?.map(p => p.id) || []),
+      ...(resident.rentedProperties?.map(p => p.id) || [])
+    ];
+    const uniqueIds = Array.from(new Set(ids));
+    if (uniqueIds.length === 0) return '';
+    return uniqueIds.map(id => flats.find(f => f.id === id)?.number).filter(Boolean).join(', ');
+  }
+
+  const filteredResidents = residents.filter(r => 
     `${r.firstName} ${r.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    getFlatNumbers(r.flatIds).includes(searchQuery)
+    getFlatNumbers(r).includes(searchQuery)
   );
-
-  function getFlatNumbers(flatIds: string[]) {
-    return flatIds.map(id => MOCK_FLATS.find(f => f.id === id)?.number).filter(Boolean).join(', ');
-  }
 
   const handleResidentClick = (resident: Resident) => {
     setSelectedResident(resident);
     setIsDrawerOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-8 pb-12">
@@ -98,10 +141,10 @@ export default function ResidentsPage() {
       {/* High-Impact Analytics Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Verified', value: MOCK_RESIDENTS.filter(r => r.isResident).length, icon: ShieldCheck, color: 'text-success', bg: 'bg-success/5' },
-          { label: 'Unit Owners', value: MOCK_RESIDENTS.filter(r => r.role === ResidentRole.PRIMARY_OWNER).length, icon: Building, color: 'text-primary', bg: 'bg-primary/5' },
-          { label: 'Lease Holders', value: MOCK_RESIDENTS.filter(r => r.role === ResidentRole.TENANT).length, icon: Users, color: 'text-info', bg: 'bg-info/5' },
-          { label: 'Absentee', value: MOCK_RESIDENTS.filter(r => !r.isResident).length, icon: MapPin, color: 'text-warning', bg: 'bg-warning/5' },
+          { label: 'Total Verified', value: residents.filter(r => r.isResident).length, icon: ShieldCheck, color: 'text-success', bg: 'bg-success/5' },
+          { label: 'Unit Owners', value: residents.filter(r => r.role === ResidentRole.PRIMARY_OWNER).length, icon: Building, color: 'text-primary', bg: 'bg-primary/5' },
+          { label: 'Lease Holders', value: residents.filter(r => r.role === ResidentRole.TENANT).length, icon: Users, color: 'text-info', bg: 'bg-info/5' },
+          { label: 'Absentee', value: residents.filter(r => !r.isResident).length, icon: MapPin, color: 'text-warning', bg: 'bg-warning/5' },
         ].map((stat, i) => (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
@@ -176,12 +219,14 @@ export default function ResidentsPage() {
                 </TableCell>
                 <TableCell className="text-center">
                   <div className="flex justify-center">
-                    {resident.role === ResidentRole.PRIMARY_OWNER ? <OwnerBadge /> : <TenantBadge />}
+                    {resident.role === ResidentRole.PRIMARY_OWNER && <OwnerBadge />}
+                    {resident.role === ResidentRole.TENANT && <TenantBadge />}
+                    {resident.role === ResidentRole.FAMILY_MEMBER && <FamilyBadge />}
                   </div>
                 </TableCell>
                 <TableCell className="text-center">
                   <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-xl bg-secondary/50 border border-border/60 text-[10px] font-black text-foreground group-hover:border-primary/20 transition-colors">
-                    <Home size={14} className="text-primary/40" /> Unit {getFlatNumbers(resident.flatIds)}
+                    <Home size={14} className="text-primary/40" /> Unit {getFlatNumbers(resident)}
                   </div>
                 </TableCell>
                 <TableCell className="text-center">
@@ -209,11 +254,14 @@ export default function ResidentsPage() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         resident={selectedResident}
+        flats={flats}
+        allResidents={residents}
       />
 
       <RegisterMemberModal 
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={fetchData}
       />
     </div>
   );

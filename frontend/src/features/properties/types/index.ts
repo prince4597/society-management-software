@@ -34,4 +34,5 @@ export interface Flat {
     ownerId: string;
     tenantId?: string;
     squareFeet?: number;
+    residents?: any[];
 }

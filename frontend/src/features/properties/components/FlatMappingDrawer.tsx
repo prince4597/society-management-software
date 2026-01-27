@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Building2, User, Phone, Mail, CreditCard, Users, ShieldCheck, Home, AlertCircle, TrendingUp, Wallet, CheckCircle2 } from 'lucide-react';
 import { Flat, OccupancyStatus, MaintenanceRule, MaintenanceStatus } from '../types';
-import { Resident } from '../../residents/types';
+import { Resident, ResidentRole } from '../../residents/types';
 import { OwnerBadge, TenantBadge, FamilyBadge } from '../../residents/components/ResidentBadges';
 import { FamilyMemberList } from '../../residents/components/FamilyMemberList';
 import { Button, Badge } from '@/components/ui';
@@ -15,6 +15,7 @@ interface FlatMappingDrawerProps {
   flat: Flat | null;
   owner?: Resident;
   tenant?: Resident;
+  allResidents?: Resident[];
 }
 
 export const FlatMappingDrawer = ({
@@ -23,8 +24,21 @@ export const FlatMappingDrawer = ({
   flat,
   owner,
   tenant,
+  allResidents = [],
 }: FlatMappingDrawerProps) => {
   if (!flat) return null;
+
+  const inhabitants = Array.from(new Map([
+    ...(flat.residents || []),
+    ...allResidents.filter(r => {
+        const allUnitIds = [
+            ...(r.flatIds || []),
+            ...(r.ownedProperties?.map(p => p.id) || []),
+            ...(r.rentedProperties?.map(p => p.id) || [])
+        ];
+        return allUnitIds.includes(flat.id);
+    })
+  ].map(r => [r.id, r])).values()).filter(r => r.id !== owner?.id && r.id !== tenant?.id);
 
   const isRented = flat.occupancyStatus === OccupancyStatus.RENTED;
   const isMaintenanceOverdue = flat.maintenanceStatus === MaintenanceStatus.OVERDUE;
@@ -203,6 +217,41 @@ export const FlatMappingDrawer = ({
                         + Link Occupant Tenant
                       </Button>
                     )}
+                  </section>
+                )}
+                
+                {/* Family Members / Inhabitants */}
+                {inhabitants.length > 0 && (
+                  <section className="relative pl-12 space-y-4">
+                    <div className="absolute left-5 top-4 w-4 h-px bg-border" />
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                        Linked Inhabitants
+                      </h3>
+                      <Badge variant="neutral" className="bg-secondary/50 text-[9px] font-bold">
+                        {inhabitants.length} Members
+                      </Badge>
+                    </div>
+                    <div className="space-y-2">
+                       {inhabitants.map(member => (
+                         <div key={member.id} className="p-3 rounded-xl bg-secondary/20 border border-border/40 flex items-center justify-between group hover:bg-card transition-all">
+                            <div className="flex items-center gap-3">
+                               <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground border border-border/60">
+                                  <User size={16} />
+                               </div>
+                               <div>
+                                  <p className="text-xs font-bold text-foreground tracking-tight">{member.firstName} {member.lastName}</p>
+                                  <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest">{member.role.replace('_', ' ')}</p>
+                               </div>
+                            </div>
+                            <div className="scale-75 origin-right">
+                              {member.role === ResidentRole.PRIMARY_OWNER && <OwnerBadge />}
+                              {member.role === ResidentRole.TENANT && <TenantBadge />}
+                              {member.role === ResidentRole.FAMILY_MEMBER && <FamilyBadge />}
+                            </div>
+                         </div>
+                       ))}
+                    </div>
                   </section>
                 )}
               </div>

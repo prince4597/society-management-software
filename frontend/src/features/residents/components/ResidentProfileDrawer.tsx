@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Phone, Mail, Home, Users, MapPin, ExternalLink, Calendar, Shield, Database, ShieldCheck } from 'lucide-react';
 import { Resident, ResidentRole } from '../types';
 import { Flat } from '../../properties/types';
-import { MOCK_FLATS } from '../../properties/data/mockData';
 import { OwnerBadge, TenantBadge, FamilyBadge } from './ResidentBadges';
 import { FamilyMemberList } from './FamilyMemberList';
 import { Button, Badge } from '@/components/ui';
@@ -14,16 +13,45 @@ interface ResidentProfileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   resident: Resident | null;
+  flats: Flat[];
+  allResidents?: Resident[];
 }
 
 export const ResidentProfileDrawer = ({
   isOpen,
   onClose,
   resident,
+  flats,
+  allResidents = [],
 }: ResidentProfileDrawerProps) => {
   if (!resident) return null;
 
-  const linkedFlats = MOCK_FLATS.filter(f => resident.flatIds.includes(f.id));
+  const linkedFlatIds = Array.from(new Set([
+    ...(resident.flatIds || []),
+    ...(resident.ownedProperties?.map(p => p.id) || []),
+    ...(resident.rentedProperties?.map(p => p.id) || [])
+  ]));
+  
+  const linkedFlats = flats.filter(f => linkedFlatIds.includes(f.id));
+  
+  // Discover other residents in same units using robust link checking
+  const coHabitants = allResidents.filter(r => {
+    if (r.id === resident.id) return false;
+    
+    // Extract all unit IDs for this other resident
+    const otherResidentUnitIds = [
+      ...(r.flatIds || []),
+      ...(r.ownedProperties?.map(p => p.id) || []),
+      ...(r.rentedProperties?.map(p => p.id) || [])
+    ];
+
+    // Check for any intersection with current resident's linked units
+    return otherResidentUnitIds.some(id => linkedFlatIds.includes(id));
+  });
+
+  const linkedOwners = coHabitants.filter(r => r.role === ResidentRole.PRIMARY_OWNER);
+  const linkedTenants = coHabitants.filter(r => r.role === ResidentRole.TENANT);
+  const householdMembers = coHabitants.filter(r => r.role === ResidentRole.FAMILY_MEMBER);
 
   return (
     <AnimatePresence>
@@ -78,7 +106,9 @@ export const ResidentProfileDrawer = ({
                   </h2>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
                      <div className="scale-110 origin-left">
-                        {resident.role === ResidentRole.PRIMARY_OWNER ? <OwnerBadge /> : <TenantBadge />}
+                        {resident.role === ResidentRole.PRIMARY_OWNER && <OwnerBadge />}
+                        {resident.role === ResidentRole.TENANT && <TenantBadge />}
+                        {resident.role === ResidentRole.FAMILY_MEMBER && <FamilyBadge />}
                      </div>
                      <Badge 
                         variant={resident.isResident ? 'success' : 'warning'} 
@@ -151,11 +181,80 @@ export const ResidentProfileDrawer = ({
               </section>
 
               {/* Family & Stakeholders */}
-              <section className="p-6 rounded-2xl bg-secondary/10 border border-border/60 shadow-sm space-y-4">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 flex items-center gap-2">
-                    <Users size={12} /> Linked stakeholders
-                </h3>
-                <FamilyMemberList members={resident.familyMembers || []} />
+              <section className="p-6 rounded-2xl bg-secondary/10 border border-border/60 shadow-sm space-y-6">
+                <div>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 flex items-center gap-2 mb-4">
+                        <Users size={12} /> Unit Stakeholders
+                    </h3>
+                    
+                    {/* Nested internal list (legacy) */}
+                    {resident.familyMembers && resident.familyMembers.length > 0 && (
+                        <div className="mb-6">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Registered Household</p>
+                            <FamilyMemberList members={resident.familyMembers} />
+                        </div>
+                    )}
+
+                    {/* Discovery-based list (separate resident records) */}
+                    <div className="space-y-4">
+                        {linkedOwners.length > 0 && (
+                            <div className="space-y-2">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-primary/60">Primary Owners</p>
+                                {linkedOwners.map(owner => (
+                                    <div key={owner.id} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/40 group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                                <User size={14} />
+                                            </div>
+                                            <p className="text-xs font-bold text-foreground">{owner.firstName} {owner.lastName}</p>
+                                        </div>
+                                        <OwnerBadge className="scale-75 origin-right" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {linkedTenants.length > 0 && (
+                            <div className="space-y-2">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-primary/60">Registered Tenants</p>
+                                {linkedTenants.map(tenant => (
+                                    <div key={tenant.id} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/40 group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                                <User size={14} />
+                                            </div>
+                                            <p className="text-xs font-bold text-foreground">{tenant.firstName} {tenant.lastName}</p>
+                                        </div>
+                                        <TenantBadge className="scale-75 origin-right" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {householdMembers.length > 0 && (
+                            <div className="space-y-2">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Household Members</p>
+                                {householdMembers.map(member => (
+                                    <div key={member.id} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/40 group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-white transition-all">
+                                                <User size={14} />
+                                            </div>
+                                            <p className="text-xs font-bold text-foreground">{member.firstName} {member.lastName}</p>
+                                        </div>
+                                        <FamilyBadge className="scale-75 origin-right" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {!resident.familyMembers?.length && !coHabitants.length && (
+                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest italic">
+                                No registered co-habitants found
+                            </p>
+                        )}
+                    </div>
+                </div>
               </section>
 
               {/* Protocol Metadata */}

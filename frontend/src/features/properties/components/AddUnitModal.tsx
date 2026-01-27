@@ -5,12 +5,17 @@ import { Dialog, Input, Button } from '@/components/ui';
 import { UnitType } from '../types';
 import { Building2, Hash, Layers, Home, Ruler } from 'lucide-react';
 
+import { propertyApi } from '../api';
+import { OccupancyStatus, MaintenanceRule, MaintenanceStatus } from '../types';
+
 interface AddUnitModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export const AddUnitModal = ({ isOpen, onClose }: AddUnitModalProps) => {
+export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) => {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     block: 'A',
     floor: '',
@@ -19,11 +24,25 @@ export const AddUnitModal = ({ isOpen, onClose }: AddUnitModalProps) => {
     squareFeet: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would call an API
-    console.log('Unit Data:', formData);
-    onClose();
+    try {
+      setLoading(true);
+      await propertyApi.create({
+        ...formData,
+        floor: parseInt(formData.floor),
+        squareFeet: parseInt(formData.squareFeet),
+        occupancyStatus: OccupancyStatus.VACANT,
+        maintenanceRule: MaintenanceRule.DEFAULT_OWNER,
+        maintenanceStatus: MaintenanceStatus.PAID,
+      });
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      console.error('Failed to register unit:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

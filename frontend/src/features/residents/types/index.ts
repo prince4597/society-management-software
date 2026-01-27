@@ -32,4 +32,6 @@ export interface Resident {
     isResident: boolean; // True if living in the society, false if non-resident owner
     familyMembers?: FamilyMember[];
     profileImage?: string;
+    ownedProperties?: any[];
+    rentedProperties?: any[];
 }

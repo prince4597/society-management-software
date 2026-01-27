@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { FlatCard } from '@/features/properties/components/FlatCard';
 import { BuildingView } from '@/features/properties/components/BuildingView';
 import { FlatMappingDrawer } from '@/features/properties/components/FlatMappingDrawer';
 import { AddUnitModal } from '@/features/properties/components/AddUnitModal';
-import { MOCK_FLATS, MOCK_RESIDENTS } from '@/features/properties/data/mockData';
+// import { MOCK_FLATS, MOCK_RESIDENTS } from '@/features/properties/data/mockData';
 import { Flat } from '@/features/properties/types';
-import { Plus, Building2, Search, Filter, LayoutGrid, List, Layers, MapPin } from 'lucide-react';
+import { Resident } from '@/features/residents/types';
+import { propertyApi } from '@/features/properties/api';
+import { residentApi } from '@/features/residents/api';
+import { Plus, Building2, Search, Filter, LayoutGrid, List, Layers, MapPin, Loader2 } from 'lucide-react';
 import { Button, Badge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +18,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 type ViewMode = 'grid' | 'building';
 
 export default function PropertiesPage() {
+  const [flats, setFlats] = useState<Flat[]>([]);
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   const [selectedFlat, setSelectedFlat] = useState<Flat | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,17 +29,40 @@ export default function PropertiesPage() {
   const [selectedBlock, setSelectedBlock] = useState('A');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [flatsData, residentsData] = await Promise.all([
+        propertyApi.findAll(),
+        residentApi.findAll(),
+      ]);
+      setFlats(flatsData);
+      setResidents(residentsData);
+      if (flatsData.length > 0 && !selectedBlock) {
+        setSelectedBlock(flatsData[0].block);
+      }
+    } catch (error) {
+      console.error('Failed to fetch properties data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   // Blocks present in data
-  const blocks = useMemo(() => Array.from(new Set(MOCK_FLATS.map(f => f.block))).sort(), []);
+  const blocks = useMemo(() => Array.from(new Set(flats.map(f => f.block))).sort(), [flats]);
 
   // Filter flats by current block and search query
   const filteredFlats = useMemo(() => {
-    return MOCK_FLATS.filter(f => 
+    return flats.filter(f => 
        f.block === selectedBlock && 
        (f.number.includes(searchQuery) || 
-        MOCK_RESIDENTS.find(r => r.id === f.ownerId)?.firstName.toLowerCase().includes(searchQuery.toLowerCase()))
+        residents.find(r => r.id === f.ownerId)?.firstName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-  }, [selectedBlock, searchQuery]);
+  }, [selectedBlock, searchQuery, flats, residents]);
 
   const groupedFlats = useMemo(() => {
     return filteredFlats.reduce((acc, flat) => {
@@ -45,13 +75,21 @@ export default function PropertiesPage() {
 
   const floors = useMemo(() => Object.keys(groupedFlats).map(Number).sort((a, b) => b - a), [groupedFlats]);
 
-  const getOwner = (ownerId: string) => MOCK_RESIDENTS.find(r => r.id === ownerId);
-  const getTenant = (tenantId?: string) => tenantId ? MOCK_RESIDENTS.find(r => r.id === tenantId) : undefined;
+  const getOwner = (ownerId: string) => residents.find(r => r.id === ownerId);
+  const getTenant = (tenantId?: string) => tenantId ? residents.find(r => r.id === tenantId) : undefined;
 
   const handleFlatClick = (flat: Flat) => {
     setSelectedFlat(flat);
     setIsDrawerOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-8 pb-12">
@@ -187,7 +225,7 @@ export default function PropertiesPage() {
                 <BuildingView 
                 blockName={selectedBlock}
                 flats={filteredFlats}
-                residents={MOCK_RESIDENTS}
+                residents={residents}
                 onFlatClick={handleFlatClick}
                 />
             </motion.div>
@@ -232,11 +270,13 @@ export default function PropertiesPage() {
         flat={selectedFlat}
         owner={selectedFlat ? getOwner(selectedFlat.ownerId) : undefined}
         tenant={selectedFlat ? getTenant(selectedFlat.tenantId) : undefined}
+        allResidents={residents}
       />
 
       <AddUnitModal 
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={fetchData}
       />
     </div>
   );
