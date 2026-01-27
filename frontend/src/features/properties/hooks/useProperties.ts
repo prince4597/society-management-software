@@ -6,7 +6,7 @@ import { PaginationParams } from '@/types';
 
 export const useProperties = (initialParams?: PaginationParams) => {
   const queryClient = useQueryClient();
-  const [params, setParams] = useState<PaginationParams>(initialParams || { page: 1, limit: 100 });
+  const [params, setParams] = useState<PaginationParams>(initialParams || { page: 1, limit: 10 });
 
   const {
     data,

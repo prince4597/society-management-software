@@ -1,13 +1,16 @@
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
+import { sequelize } from '../../config/database';
 import { ConflictError, NotFoundError } from '../../middleware/errors';
 import { BaseService } from '../../core/base.service';
 import { PaginatedResult, PaginationParams } from '../../types';
 import { residentRepository, ResidentRepository } from './repository';
 import { propertyRepository } from '../property/repository';
+import { ResidentRole } from '../../models/resident.model';
+import { OccupancyStatus } from '../../models/property.model';
 import type { CreateResidentInput, UpdateResidentInput } from './dto';
 import type { ResidentAttributes } from '../../models/resident.model';
 
-class ResidentService extends BaseService<
+export class ResidentService extends BaseService<
   ResidentAttributes,
   CreateResidentInput,
   UpdateResidentInput,
@@ -31,8 +34,47 @@ class ResidentService extends BaseService<
       );
     }
 
-    const response = await this.create(input, societyId);
-    return response.data!;
+    const transaction: Transaction = await sequelize.transaction();
+
+    try {
+      // 1. Create the resident
+      const resident = await this.repository.getModel().create({
+        ...input,
+        societyId,
+      }, { transaction });
+
+      // 2. If flatIds are provided and it's a primary role, update property links atomically
+      if (input.flatIds && input.flatIds.length > 0) {
+        const isPrimaryRole = input.role === ResidentRole.PRIMARY_OWNER || input.role === ResidentRole.TENANT;
+
+        if (isPrimaryRole) {
+          const occupancyStatus = input.role === ResidentRole.TENANT
+            ? OccupancyStatus.RENTED
+            : OccupancyStatus.OWNER_OCCUPIED;
+
+          const updateData: Record<string, any> = { occupancyStatus };
+          if (input.role === ResidentRole.TENANT) {
+            updateData.tenantId = resident.id;
+          } else {
+            updateData.ownerId = resident.id;
+          }
+
+          await propertyRepository.getModel().update(updateData, {
+            where: {
+              id: input.flatIds,
+              societyId
+            },
+            transaction
+          });
+        }
+      }
+
+      await transaction.commit();
+      return resident.toJSON() as ResidentAttributes;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async findAllPaginatedInSociety(
@@ -43,7 +85,7 @@ class ResidentService extends BaseService<
       societyId,
       pagination: {
         page: pagination.page || 1,
-        limit: pagination.limit || 20,
+        limit: pagination.limit || 10,
         sortBy: pagination.sortBy || 'createdAt',
         sortOrder: pagination.sortOrder || 'DESC',
       },
@@ -62,27 +104,58 @@ class ResidentService extends BaseService<
     });
 
     const paginatedResult = response.data!;
-    const allResidents = await this.repository.findAll({ societyId });
 
-    paginatedResult.data = this.enrichResidents(paginatedResult.data, allResidents);
+    if (paginatedResult.data.length > 0) {
+      // Get all flat IDs from the current page of residents
+      const allFlatIds = paginatedResult.data.reduce((acc, r) => {
+        return [...acc, ...(r.flatIds || [])];
+      }, [] as string[]);
+
+      const uniqueFlatIds = Array.from(new Set(allFlatIds));
+
+      if (uniqueFlatIds.length > 0) {
+        // Fetch only residents that share these flats
+        // Restrict attributes to protect PII in nested relations
+        const potentialCoHabitants = await this.repository.findAll({
+          where: {
+            societyId,
+            flatIds: { [Op.overlap]: uniqueFlatIds }
+          } as Record<string, unknown>,
+          include: [] // Ensure no deep relations are fetched for co-habitants
+        });
+
+        paginatedResult.data = this.enrichResidents(paginatedResult.data, potentialCoHabitants);
+      } else {
+        paginatedResult.data = paginatedResult.data.map(r => ({ ...r, coHabitants: [] }));
+      }
+    }
 
     return paginatedResult;
   }
 
   private enrichResidents(
     residents: ResidentAttributes[],
-    allResidents: ResidentAttributes[]
+    potentialCoHabitants: ResidentAttributes[]
   ): ResidentAttributes[] {
     return residents.map((r) => {
       const residentData = { ...r };
       const flatIds = residentData.flatIds || [];
 
       if (flatIds.length > 0) {
-        residentData.coHabitants = allResidents.filter(
-          (other) =>
-            other.id !== r.id &&
-            (other.flatIds || []).some((fid) => flatIds.includes(fid))
-        );
+        residentData.coHabitants = potentialCoHabitants
+          .filter(
+            (other) =>
+              other.id !== r.id &&
+              (other.flatIds || []).some((fid) => flatIds.includes(fid))
+          )
+          .map(other => ({
+            id: other.id,
+            firstName: other.firstName,
+            lastName: other.lastName,
+            role: other.role,
+            isResident: other.isResident,
+            profileImage: other.profileImage,
+          } as ResidentAttributes)); // Restrict to non-sensitive fields
       } else {
         residentData.coHabitants = [];
       }
@@ -110,9 +183,23 @@ class ResidentService extends BaseService<
     });
 
     const residents = response.data!;
-    const allResidents = await this.repository.findAll({ societyId });
 
-    return this.enrichResidents(residents, allResidents);
+    if (residents.length === 0) return [];
+
+    const allFlatIds = residents.reduce((acc, r) => [...acc, ...(r.flatIds || [])], [] as string[]);
+    const uniqueFlatIds = Array.from(new Set(allFlatIds));
+
+    if (uniqueFlatIds.length > 0) {
+      const potentialCoHabitants = await this.repository.findAll({
+        where: {
+          societyId,
+          flatIds: { [Op.overlap]: uniqueFlatIds }
+        } as Record<string, unknown>
+      });
+      return this.enrichResidents(residents, potentialCoHabitants);
+    }
+
+    return residents.map(r => ({ ...r, coHabitants: [] }));
   }
 
   async findByIdInSociety(societyId: string, id: string): Promise<ResidentAttributes> {

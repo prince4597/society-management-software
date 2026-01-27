@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import { Home, Users, Search, Shield, CreditCard, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { Sidebar, Header } from '@/features/dashboard';
 import { AnimatePresence } from 'framer-motion';
 import { ProtectedRoute } from '@/features/auth';
 import { RoleName } from '@/types';
+import { useStore } from '@/store/useStore';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Control Center', href: '/dashboard' },
@@ -19,7 +20,7 @@ const navItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { isSidebarOpen, toggleSidebar } = useStore();
 
   return (
     <ProtectedRoute allowedRole={RoleName.SOCIETY_ADMIN}>
@@ -34,11 +35,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Header
             user={user}
             isSidebarOpen={isSidebarOpen}
-            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            onToggleSidebar={toggleSidebar}
           />
 
           <main className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar bg-secondary/20">
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </main>
         </div>
       </div>

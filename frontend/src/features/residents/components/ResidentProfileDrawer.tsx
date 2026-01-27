@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Phone, Mail, Home, Users, Calendar, Shield, Database, ShieldCheck, Loader2 } from 'lucide-react';
 import { Resident, ResidentRole } from '../types';
-import { Flat } from '../../properties/types';
 import { OwnerBadge, TenantBadge, FamilyBadge } from './ResidentBadges';
 import { FamilyMemberList } from './FamilyMemberList';
 import { Button, Badge } from '@/components/ui';
@@ -15,8 +14,6 @@ interface ResidentProfileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   resident: Resident | null;
-  flats: Flat[];
-  allResidents?: Resident[];
 }
 
 export const ResidentProfileDrawer: React.FC<ResidentProfileDrawerProps> = ({ isOpen, onClose, resident }) => {

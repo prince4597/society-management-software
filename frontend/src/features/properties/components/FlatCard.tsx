@@ -1,15 +1,14 @@
 'use client';
 
-import { Flat, OccupancyStatus, MaintenanceStatus } from '../types';
+import { Flat, OccupancyStatus, MaintenanceStatus, ResidentReference } from '../types';
 import { Card, Badge } from '@/components/ui';
 import { User, ArrowRight, AlertCircle } from 'lucide-react';
-import { Resident } from '../../residents/types';
 import { cn } from '@/lib/utils';
 
 interface FlatCardProps {
   flat: Flat;
-  owner?: Resident;
-  tenant?: Resident;
+  owner?: ResidentReference;
+  tenant?: ResidentReference;
   onClick?: () => void;
 }
 

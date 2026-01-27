@@ -12,6 +12,7 @@ import {
   securityHeaders,
   apiRateLimiter,
 } from './middleware';
+import { metricsRegistry, metricsMiddleware } from './utils/metrics';
 import routes from './routes';
 import { logger } from './utils/logger';
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -27,9 +28,13 @@ export const createApp = (): Application => {
   app.use(cookieParser());
   app.use(compression());
 
+  const corsOrigins = env.CORS_ORIGIN.split(',').map(o => o.trim());
+
   app.use(
     cors({
-      origin: [env.CORS_ORIGIN || 'http://localhost:3000'],
+      origin: env.NODE_ENV === 'production'
+        ? corsOrigins
+        : true, // true allows reflections, useful for dev/preview
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
       exposedHeaders: [
@@ -51,6 +56,7 @@ export const createApp = (): Application => {
   app.use(hpp());
   app.use(requestContext);
   app.use(sanitize);
+  app.use(metricsMiddleware);
   app.use(apiRateLimiter);
 
   if (env.NODE_ENV === 'development') {
@@ -61,6 +67,11 @@ export const createApp = (): Application => {
       next();
     });
   }
+
+  app.get('/metrics', async (_req: Request, res: Response) => {
+    res.set('Content-Type', metricsRegistry.contentType);
+    res.end(await metricsRegistry.metrics());
+  });
 
   app.get('/', (req: Request, res: Response) => {
     res.json({

@@ -62,24 +62,7 @@ export class AuthService {
 
     return {
       token,
-      admin: {
-        id: admin.id,
-        firstName: admin.firstName,
-        lastName: admin.lastName,
-        email: admin.email,
-        phoneNumber: admin.phoneNumber,
-        role: admin.role,
-        isActive: admin.isActive,
-        society: admin.society
-          ? {
-            id: admin.society.id,
-            name: admin.society.name,
-          }
-          : undefined,
-        lastLogin: admin.lastLogin || undefined,
-        createdAt: admin.createdAt,
-        updatedAt: admin.updatedAt,
-      },
+      admin: this.transformProfile(admin),
     };
   }
 
@@ -93,6 +76,10 @@ export class AuthService {
       throw new UnauthorizedError('Account not found or inactive');
     }
 
+    return this.transformProfile(admin);
+  }
+
+  private transformProfile(admin: AdminWithSociety): AdminProfile {
     return {
       id: admin.id,
       firstName: admin.firstName,

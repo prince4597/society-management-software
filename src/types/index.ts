@@ -67,6 +67,7 @@ export interface FindOptions<T> {
   include?: (string | object)[];
   societyId?: string;
   paranoid?: boolean;
+  search?: string;
 }
 
 export interface IRepository<T, CreateDTO, UpdateDTO, ID = string | number> {

@@ -30,11 +30,11 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
     role: ResidentRole.PRIMARY_OWNER,
   });
 
-  const loadUnits = useCallback(async () => {
+  const loadUnits = useCallback(async (search?: string) => {
     try {
       setFetchingUnits(true);
-      const data = await propertyApi.findAll();
-      setUnits(data);
+      const response = await propertyApi.findAll({ search, limit: 12 });
+      setUnits(response.data);
     } catch (error) {
       console.error('Failed to fetch units:', error);
     } finally {
@@ -43,45 +43,32 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
   }, []);
 
   useEffect(() => {
-    if (isOpen && step === 2 && units.length === 0) {
-      loadUnits();
+    if (isOpen && step === 2) {
+      const timer = setTimeout(() => {
+        loadUnits(searchQuery);
+      }, searchQuery ? 300 : 0);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen, step, units.length, loadUnits]);
+  }, [isOpen, step, searchQuery, loadUnits]);
 
   const handleNext = () => setStep(2);
-  const handleBack = () => setStep(1);
+  const handleBack = () => {
+    setStep(1);
+    setSearchQuery('');
+  };
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
 
-      // 1. Create the resident
-      const newResident = await residentApi.create({
+      // 1. Create the resident (linking happens atomically on backend)
+      await residentApi.create({
         ...formData,
         isResident: true,
         flatIds: selectedUnitIds,
       });
 
-      // 2. Link selected units (only for Primary roles)
-      const isPrimaryRole = formData.role === ResidentRole.PRIMARY_OWNER || formData.role === ResidentRole.TENANT;
-      if (selectedUnitIds.length > 0 && isPrimaryRole) {
-        const updateData: Partial<Flat> = {
-          occupancyStatus: formData.role === ResidentRole.TENANT
-            ? OccupancyStatus.RENTED
-            : OccupancyStatus.OWNER_OCCUPIED,
-        };
-
-        // Assign to the correct role field
-        if (formData.role === ResidentRole.TENANT) {
-          updateData.tenantId = newResident.id;
-        } else {
-          updateData.ownerId = newResident.id;
-        }
-
-        await Promise.all(
-          selectedUnitIds.map(unitId => propertyApi.update(unitId, updateData))
-        );
-      }
+      // 2. Success Path cleanup
 
       onSuccess?.();
       handleClose();
@@ -102,13 +89,11 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
       role: ResidentRole.PRIMARY_OWNER,
     });
     setSelectedUnitIds([]);
+    setSearchQuery('');
     onClose();
   };
 
-  const filteredUnits = units.filter(u =>
-    u.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.block.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUnits = units; // Server-side filtered now
 
   const toggleUnit = (id: string) => {
     setSelectedUnitIds(prev =>

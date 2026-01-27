@@ -107,6 +107,11 @@ Admin.init(
     underscored: true,
     timestamps: true,
     paranoid: true,
+    scopes: {
+      tenant: (societyId: string) => ({
+        where: { societyId },
+      }),
+    },
     hooks: {
       beforeValidate: (admin: Admin) => {
         // Business Logic Consistency Checks

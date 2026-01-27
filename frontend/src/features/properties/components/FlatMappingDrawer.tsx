@@ -14,9 +14,6 @@ interface FlatMappingDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   flat: Flat | null;
-  owner?: Resident;
-  tenant?: Resident;
-  allResidents?: Resident[];
 }
 
 export const FlatMappingDrawer: React.FC<FlatMappingDrawerProps> = ({ isOpen, onClose, flat }) => {

@@ -11,7 +11,7 @@ export class PropertyRepository extends BaseRepository<
   string
 > {
   constructor() {
-    super(Property, 'Property');
+    super(Property, 'Property', ['number', 'block']);
   }
 }
 

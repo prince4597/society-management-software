@@ -39,13 +39,14 @@ class PropertyService extends BaseService<
 
   async findAllPaginatedInSociety(
     societyId: string,
-    pagination: Partial<PaginationParams>
+    pagination: Partial<PaginationParams & { search?: string }>
   ): Promise<PaginatedResult<PropertyAttributes>> {
     const response = await this.findAllPaginated({
       societyId,
+      search: pagination.search,
       pagination: {
         page: pagination.page || 1,
-        limit: pagination.limit || 20,
+        limit: pagination.limit || 10,
         sortBy: pagination.sortBy || 'createdAt',
         sortOrder: pagination.sortOrder || 'DESC',
       },
@@ -64,25 +65,55 @@ class PropertyService extends BaseService<
     });
 
     const paginatedResult = response.data!;
-    const allResidents = await residentRepository.findAll({ societyId });
 
-    paginatedResult.data = await this.enrichPropertiesWithResidents(paginatedResult.data, allResidents);
+    if (paginatedResult.data.length > 0) {
+      // Get all resident IDs linked to these properties (owners + tenants)
+      const residentIds = paginatedResult.data.reduce((acc, p) => {
+        if (p.ownerId) acc.add(p.ownerId);
+        if (p.tenantId) acc.add(p.tenantId);
+        return acc;
+      }, new Set<string>());
+
+      const propertyIds = paginatedResult.data.map(p => p.id);
+
+      // Fetch residents who either are owners/tenants OR have these properties in their flatIds
+      const potentialLinkedResidents = await residentRepository.findAll({
+        where: {
+          societyId,
+          [Op.or]: [
+            { id: Array.from(residentIds) },
+            { flatIds: { [Op.overlap]: propertyIds } }
+          ]
+        } as Record<string, unknown>
+      });
+
+      paginatedResult.data = await this.enrichPropertiesWithResidents(paginatedResult.data, potentialLinkedResidents);
+    }
 
     return paginatedResult;
   }
 
   private async enrichPropertiesWithResidents(
     properties: PropertyAttributes[],
-    allResidents: ResidentAttributes[]
+    potentialResidents: ResidentAttributes[]
   ): Promise<PropertyWithResidents[]> {
     return properties.map((p) => {
-      const propertyWithResidents = p as PropertyWithResidents;
-      propertyWithResidents.residents = allResidents.filter(
-        (r) =>
-          (r.flatIds || []).includes(p.id) ||
-          r.id === p.ownerId ||
-          r.id === p.tenantId
-      );
+      const propertyWithResidents = { ...p } as PropertyWithResidents;
+      propertyWithResidents.residents = potentialResidents
+        .filter(
+          (r) =>
+            (r.flatIds || []).includes(p.id) ||
+            r.id === p.ownerId ||
+            r.id === p.tenantId
+        )
+        .map(r => ({
+          id: r.id,
+          firstName: r.firstName,
+          lastName: r.lastName,
+          role: r.role,
+          isResident: r.isResident,
+          profileImage: r.profileImage,
+        } as ResidentAttributes)); // PII Protection: only expose necessary info in list
       return propertyWithResidents;
     });
   }
@@ -105,9 +136,27 @@ class PropertyService extends BaseService<
     });
 
     const properties = response.data!;
-    const allResidents = await residentRepository.findAll({ societyId });
+    if (properties.length === 0) return [];
 
-    return this.enrichPropertiesWithResidents(properties, allResidents);
+    const residentIds = properties.reduce((acc, p) => {
+      if (p.ownerId) acc.add(p.ownerId);
+      if (p.tenantId) acc.add(p.tenantId);
+      return acc;
+    }, new Set<string>());
+
+    const propertyIds = properties.map(p => p.id);
+
+    const potentialResidents = await residentRepository.findAll({
+      where: {
+        societyId,
+        [Op.or]: [
+          { id: Array.from(residentIds) },
+          { flatIds: { [Op.overlap]: propertyIds } }
+        ]
+      } as Record<string, unknown>
+    });
+
+    return this.enrichPropertiesWithResidents(properties, potentialResidents);
   }
 
   async findByIdInSociety(societyId: string, id: string): Promise<PropertyWithResidents> {
@@ -161,12 +210,13 @@ class PropertyService extends BaseService<
     data: UpdatePropertyInput
   ): Promise<PropertyAttributes> {
     const property = await this.findById(id, societyId);
-
-    if (data.ownerId && property.data!.ownerId && data.ownerId !== property.data!.ownerId) {
-      throw new ConflictError(
-        `Property ${property.data!.number} already has an owner assigned. Each unit can have only one owner.`
-      );
+    if (!property.data) {
+      throw new NotFoundError('Property', id);
     }
+
+    // Logic Fix: Removing the ConflictError that blocked ownership transfers.
+    // In a production app, we should allow updating the ownerId.
+    // Ideally, we could add a Transfer History record here if that were in the schema.
 
     const response = await this.update(id, data, societyId);
     return response.data!;

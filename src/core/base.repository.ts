@@ -25,21 +25,49 @@ export abstract class BaseRepository<
 > implements IRepository<Attributes, CreateDTO, UpdateDTO, ID> {
   protected readonly model: ModelStatic<T>;
   protected readonly entityName: string;
+  protected readonly searchableFields: string[] = [];
 
-  constructor(model: ModelStatic<T>, entityName: string) {
+  constructor(model: ModelStatic<T>, entityName: string, searchableFields: string[] = []) {
     this.model = model;
     this.entityName = entityName;
+    this.searchableFields = searchableFields;
   }
 
   public getModel(): ModelStatic<T> {
     return this.model;
   }
 
-  protected buildWhereClause(where?: Partial<Attributes> | Record<string, unknown>, societyId?: string): WhereOptions {
-    const whereClause: Record<string, unknown> = (where ?? {}) as Record<string, unknown>;
+  protected getScopedModel(societyId?: string): ModelStatic<T> {
     if (societyId) {
+      return (this.model as any).scope({ method: ['tenant', societyId] });
+    }
+    return this.model;
+  }
+
+  protected buildWhereClause(
+    where?: Partial<Attributes> | Record<string, unknown>,
+    societyId?: string,
+    search?: string
+  ): WhereOptions {
+    const { Op } = require('sequelize');
+    const whereClause: any = { ...(where ?? {}) };
+
+    if (societyId && !whereClause['societyId']) {
       whereClause['societyId'] = societyId;
     }
+
+    if (search && this.searchableFields.length > 0) {
+      const searchConditions = this.searchableFields.map((field) => ({
+        [field]: { [Op.iLike]: `%${search}%` },
+      }));
+
+      if (whereClause[Op.and]) {
+        whereClause[Op.and] = [...whereClause[Op.and], { [Op.or]: searchConditions }];
+      } else {
+        whereClause[Op.or] = searchConditions;
+      }
+    }
+
     return whereClause as WhereOptions;
   }
 
@@ -51,8 +79,12 @@ export abstract class BaseRepository<
   protected buildFindOptions(options?: FindOptions<Attributes>): SequelizeFindOptions {
     const findOptions: SequelizeFindOptions = {};
 
-    if (options?.where || options?.societyId) {
-      findOptions.where = this.buildWhereClause(options.where, options.societyId) as WhereOptions;
+    if (options?.where || options?.societyId || options?.search) {
+      findOptions.where = this.buildWhereClause(
+        options.where,
+        options.societyId,
+        options.search
+      ) as WhereOptions;
     }
 
     if (options?.include) {
@@ -75,10 +107,8 @@ export abstract class BaseRepository<
 
   async findById(id: ID, societyId?: string): Promise<Attributes | null> {
     try {
-      const where: Record<string, unknown> = { id };
-      if (societyId) where['societyId'] = societyId;
-
-      const record = await this.model.findOne({ where: where as WhereOptions });
+      const model = this.getScopedModel(societyId);
+      const record = await model.findByPk(id as any);
       return record ? (record.toJSON() as Attributes) : null;
     } catch (error) {
       logger.error(`${this.entityName}.findById failed:`, error);
@@ -88,7 +118,8 @@ export abstract class BaseRepository<
 
   async findOne(options: FindOptions<Attributes>): Promise<Attributes | null> {
     try {
-      const record = await this.model.findOne(this.buildFindOptions(options));
+      const model = this.getScopedModel(options.societyId);
+      const record = await model.findOne(this.buildFindOptions(options));
       return record ? (record.toJSON() as Attributes) : null;
     } catch (error) {
       logger.error(`${this.entityName}.findOne failed:`, error);
@@ -98,7 +129,8 @@ export abstract class BaseRepository<
 
   async findAll(options?: FindOptions<Attributes>): Promise<Attributes[]> {
     try {
-      const records = await this.model.findAll(this.buildFindOptions(options));
+      const model = this.getScopedModel(options?.societyId);
+      const records = await model.findAll(this.buildFindOptions(options));
       return records.map((record) => record.toJSON() as Attributes);
     } catch (error) {
       logger.error(`${this.entityName}.findAll failed:`, error);
@@ -109,7 +141,8 @@ export abstract class BaseRepository<
   async findAllPaginated(options: FindOptions<Attributes>): Promise<PaginatedResult<Attributes>> {
     try {
       const pagination = options.pagination ?? DEFAULT_PAGINATION;
-      const { count, rows } = await this.model.findAndCountAll(this.buildFindOptions(options));
+      const model = this.getScopedModel(options.societyId);
+      const { count, rows } = await model.findAndCountAll(this.buildFindOptions(options));
 
       return {
         data: rows.map((record) => record.toJSON() as Attributes),
@@ -133,19 +166,15 @@ export abstract class BaseRepository<
 
   async update(id: ID, data: UpdateDTO, societyId?: string): Promise<Attributes | null> {
     try {
-      const where: Record<string, unknown> = { id };
-      if (societyId) where['societyId'] = societyId;
+      const model = this.getScopedModel(societyId);
+      const record = await model.findByPk(id as any);
 
-      const [affectedCount] = await this.model.update(
-        data as unknown as Partial<T['_attributes']>,
-        { where: where as WhereOptions }
-      );
-
-      if (affectedCount === 0) {
+      if (!record) {
         return null;
       }
 
-      return this.findById(id, societyId);
+      await record.update(data as any);
+      return record.toJSON() as Attributes;
     } catch (error) {
       logger.error(`${this.entityName}.update failed:`, error);
       throw new DatabaseError(`Failed to update ${this.entityName}`);
@@ -154,11 +183,15 @@ export abstract class BaseRepository<
 
   async delete(id: ID, societyId?: string): Promise<boolean> {
     try {
-      const where: Record<string, unknown> = { id };
-      if (societyId) where['societyId'] = societyId;
+      const model = this.getScopedModel(societyId);
+      const record = await model.findByPk(id as any);
 
-      const affectedCount = await this.model.destroy({ where: where as WhereOptions });
-      return affectedCount > 0;
+      if (!record) {
+        return false;
+      }
+
+      await record.destroy();
+      return true;
     } catch (error) {
       logger.error(`${this.entityName}.delete failed:`, error);
       throw new DatabaseError(`Failed to delete ${this.entityName}`);
@@ -167,8 +200,9 @@ export abstract class BaseRepository<
 
   async count(where?: Partial<Attributes> | Record<string, unknown>, societyId?: string): Promise<number> {
     try {
-      return await this.model.count({
-        where: this.buildWhereClause(where, societyId),
+      const model = this.getScopedModel(societyId);
+      return await model.count({
+        where: this.buildWhereClause(where),
       });
     } catch (error) {
       logger.error(`${this.entityName}.count failed:`, error);
@@ -176,8 +210,9 @@ export abstract class BaseRepository<
     }
   }
 
-  async exists(id: ID): Promise<boolean> {
-    const count = await this.model.count({
+  async exists(id: ID, societyId?: string): Promise<boolean> {
+    const model = this.getScopedModel(societyId);
+    const count = await model.count({
       where: { id } as Record<string, unknown> as WhereOptions,
     });
     return count > 0;

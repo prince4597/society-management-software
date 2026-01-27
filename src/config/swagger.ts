@@ -50,6 +50,30 @@ export const swaggerOptions: Options = {
             timestamp: { type: 'string', format: 'date-time' },
           },
         },
+        ApiResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            data: { type: 'object' },
+            message: { type: 'string' },
+            requestId: { type: 'string' },
+          },
+        },
+        PaginatedResult: {
+          type: 'object',
+          properties: {
+            data: { type: 'array', items: { type: 'object' } },
+            meta: {
+              type: 'object',
+              properties: {
+                total: { type: 'integer' },
+                page: { type: 'integer' },
+                limit: { type: 'integer' },
+                totalPages: { type: 'integer' },
+              },
+            },
+          },
+        },
       },
     },
     security: [

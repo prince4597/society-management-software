@@ -5,24 +5,17 @@ import { FlatCard } from '@/features/properties/components/FlatCard';
 import { BuildingView } from '@/features/properties/components/BuildingView';
 import { FlatMappingDrawer } from '@/features/properties/components/FlatMappingDrawer';
 import { AddUnitModal } from '@/features/properties/components/AddUnitModal';
-// import { MOCK_FLATS, MOCK_RESIDENTS } from '@/features/properties/data/mockData';
-import { Flat } from '@/features/properties/types';
-import { Resident, ResidentRole } from '@/features/residents/types';
-import { propertyApi } from '@/features/properties/api';
-import { residentApi } from '@/features/residents/api';
+import { Flat, ResidentRole } from '@/features/properties/types';
 import { Plus, Building2, Search, Filter, LayoutGrid, Layers, Loader2 } from 'lucide-react';
 import { Button, Badge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type ViewMode = 'grid' | 'building';
-
-import { useResidents } from '@/features/residents/hooks/useResidents';
 import { useProperties } from '@/features/properties/hooks/useProperties';
 
 export default function PropertiesPage() {
   const { properties: flats, isLoading: loadingFlats, refresh: refreshFlats } = useProperties();
-  const { residents, isLoading: loadingResidents } = useResidents();
 
   const [selectedFlat, setSelectedFlat] = useState<Flat | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -31,7 +24,7 @@ export default function PropertiesPage() {
   const [selectedBlock, setSelectedBlock] = useState('A');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const loading = loadingFlats || loadingResidents;
+  const loading = loadingFlats;
 
   const fetchData = useCallback(async () => {
     refreshFlats();
@@ -55,12 +48,12 @@ export default function PropertiesPage() {
       (f) =>
         f.block === selectedBlock &&
         (f.number.includes(searchQuery) ||
-          residents
-            .find((r) => r.id === f.ownerId)
-            ?.firstName.toLowerCase()
-            .includes(searchQuery.toLowerCase()))
+          (f.residents || []).some(r => 
+            r.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            r.lastName.toLowerCase().includes(searchQuery.toLowerCase())
+          ))
     );
-  }, [selectedBlock, searchQuery, flats, residents]);
+  }, [selectedBlock, searchQuery, flats]);
 
   const groupedFlats = useMemo(() => {
     return filteredFlats.reduce((acc, flat) => {
@@ -77,15 +70,11 @@ export default function PropertiesPage() {
   );
 
   const getOwner = (flat: Flat) => {
-    if (flat.ownerId) return residents.find((r) => r.id === flat.ownerId);
-    const linkedOwner = flat.residents?.find((r) => r.role === ResidentRole.PRIMARY_OWNER);
-    return linkedOwner ? residents.find((r) => r.id === linkedOwner.id) : undefined;
+    return flat.residents?.find((r) => r.role === ResidentRole.PRIMARY_OWNER);
   };
 
   const getTenant = (flat: Flat) => {
-    if (flat.tenantId) return residents.find((r) => r.id === flat.tenantId);
-    const linkedTenant = flat.residents?.find((r) => r.role === ResidentRole.TENANT);
-    return linkedTenant ? residents.find((r) => r.id === linkedTenant.id) : undefined;
+    return flat.residents?.find((r) => r.role === ResidentRole.TENANT);
   };
 
   const handleFlatClick = (flat: Flat) => {
@@ -235,7 +224,6 @@ export default function PropertiesPage() {
               <BuildingView
                 blockName={selectedBlock}
                 flats={filteredFlats}
-                residents={residents}
                 onFlatClick={handleFlatClick}
               />
             </motion.div>
@@ -278,9 +266,6 @@ export default function PropertiesPage() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         flat={selectedFlat}
-        owner={selectedFlat ? getOwner(selectedFlat) : undefined}
-        tenant={selectedFlat ? getTenant(selectedFlat) : undefined}
-        allResidents={residents}
       />
 
       <AddUnitModal

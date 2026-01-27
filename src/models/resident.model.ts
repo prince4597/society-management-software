@@ -130,6 +130,11 @@ Resident.init(
     underscored: true,
     timestamps: true,
     paranoid: true,
+    scopes: {
+      tenant: (societyId: string) => ({
+        where: { societyId },
+      }),
+    },
   }
 );
 

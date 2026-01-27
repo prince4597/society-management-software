@@ -1,6 +1,9 @@
 import winston from 'winston';
 import path from 'path';
 import fs from 'fs';
+import { AsyncLocalStorage } from 'async_hooks';
+
+export const loggerContext = new AsyncLocalStorage<Map<string, string>>();
 
 const LOG_DIR = 'logs';
 
@@ -8,11 +11,30 @@ if (!fs.existsSync(LOG_DIR)) {
   fs.mkdirSync(LOG_DIR, { recursive: true });
 }
 
+const SENSITIVE_FIELDS = ['password', 'email', 'phoneNumber', 'token', 'secret', 'authorization'];
+
+const maskData = (data: any): any => {
+  if (!data || typeof data !== 'object') return data;
+
+  const mapped = { ...data };
+  for (const key of Object.keys(mapped)) {
+    if (SENSITIVE_FIELDS.includes(key)) {
+      mapped[key] = '***REDACTED***';
+    } else if (typeof mapped[key] === 'object') {
+      mapped[key] = maskData(mapped[key]);
+    }
+  }
+  return mapped;
+};
+
 const formatMeta = (meta: Record<string, unknown>): string => {
   const filtered = Object.entries(meta).filter(
     ([key]) => !['level', 'message', 'timestamp', 'stack'].includes(key)
   );
-  return filtered.length > 0 ? ` ${JSON.stringify(Object.fromEntries(filtered))}` : '';
+  if (filtered.length === 0) return '';
+
+  const masked = maskData(Object.fromEntries(filtered));
+  return ` ${JSON.stringify(masked)}`;
 };
 
 const logFormat = winston.format.combine(
@@ -20,11 +42,14 @@ const logFormat = winston.format.combine(
   winston.format.errors({ stack: true }),
   winston.format.printf((info) => {
     const { timestamp, level, message, stack, ...meta } = info;
+    const store = loggerContext.getStore();
+    const requestId = store?.get('requestId') || meta['requestId'] || 'system';
+
     const metaStr = formatMeta(meta);
     const ts = String(timestamp);
     const msg = String(message);
     const lvl = level.toUpperCase().padEnd(5);
-    const baseLog = `${ts} [${lvl}] ${msg}${metaStr}`;
+    const baseLog = `${ts} [${lvl}] [${requestId}] ${msg}${metaStr}`;
     if (stack && typeof stack === 'string') {
       return `${baseLog}\n${stack}`;
     }
@@ -36,10 +61,13 @@ const consoleFormat = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.timestamp({ format: 'HH:mm:ss.SSS' }),
   winston.format.printf((info) => {
-    const { timestamp, level, message, stack } = info;
+    const { timestamp, level, message, stack, ...meta } = info;
+    const store = loggerContext.getStore();
+    const requestId = store?.get('requestId') || meta['requestId'] || 'system';
+
     const ts = String(timestamp);
     const msg = String(message);
-    const baseLog = `${ts} ${level} ${msg}`;
+    const baseLog = `${ts} ${level} [${requestId}] ${msg}`;
     if (stack && typeof stack === 'string') {
       return `${baseLog}\n${stack}`;
     }

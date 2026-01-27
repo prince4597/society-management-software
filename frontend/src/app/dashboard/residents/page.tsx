@@ -3,9 +3,6 @@
 import { useState, useEffect } from 'react';
 // import { MOCK_RESIDENTS, MOCK_FLATS } from '@/features/properties/data/mockData';
 import { Resident, ResidentRole } from '@/features/residents/types';
-import { Flat } from '@/features/properties/types';
-import { residentApi } from '@/features/residents/api';
-import { propertyApi } from '@/features/properties/api';
 import { ResidentProfileDrawer } from '@/features/residents/components/ResidentProfileDrawer';
 import { RegisterMemberModal } from '@/features/residents/components/RegisterMemberModal';
 import {
@@ -34,40 +31,35 @@ import { OwnerBadge, TenantBadge, FamilyBadge } from '@/features/residents/compo
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
+import { Skeleton, TableSkeleton } from '@/components/ui/Skeleton';
 import { useResidents } from '@/features/residents/hooks/useResidents';
-import { useProperties } from '@/features/properties/hooks/useProperties';
 
 export default function ResidentsPage() {
   const { residents, isLoading: loadingResidents, refresh: refreshResidents } = useResidents();
-  const { properties: flats, isLoading: loadingFlats } = useProperties();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const loading = loadingResidents || loadingFlats;
+  const loading = loadingResidents;
 
   const fetchData = async () => {
     refreshResidents();
   };
 
   function getFlatNumbers(resident: Resident) {
-    const ids = [
-      ...(resident.flatIds || []),
-      ...(resident.ownedProperties?.map((p) => p.id) || []),
-      ...(resident.rentedProperties?.map((p) => p.id) || []),
+    const flatNumbers = [
+      ...(resident.ownedProperties?.map((p) => p.number) || []),
+      ...(resident.rentedProperties?.map((p) => p.number) || []),
     ];
-    const uniqueIds = Array.from(new Set(ids));
-    if (uniqueIds.length === 0) return '';
-    return uniqueIds
-      .map((id) => flats.find((f) => f.id === id)?.number)
-      .filter(Boolean)
-      .join(', ');
+    const uniqueNumbers = Array.from(new Set(flatNumbers));
+    if (uniqueNumbers.length === 0) return 'None';
+    return uniqueNumbers.join(', ');
   }
 
   const filteredResidents = residents.filter(
-    (r) =>
+    (r: Resident) =>
       `${r.firstName} ${r.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getFlatNumbers(r).includes(searchQuery)
@@ -78,13 +70,7 @@ export default function ResidentsPage() {
     setIsDrawerOpen(true);
   };
 
-  if (loading && residents.length === 0) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const isLoadingInitial = loading && residents.length === 0;
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-8 pb-12">
@@ -128,10 +114,10 @@ export default function ResidentsPage() {
       {/* High-Impact Analytics Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Verified', value: residents.filter(r => r.isResident).length, icon: ShieldCheck, color: 'text-success', bg: 'bg-success/5' },
-          { label: 'Unit Owners', value: residents.filter(r => r.role === ResidentRole.PRIMARY_OWNER).length, icon: Building, color: 'text-primary', bg: 'bg-primary/5' },
-          { label: 'Lease Holders', value: residents.filter(r => r.role === ResidentRole.TENANT).length, icon: Users, color: 'text-info', bg: 'bg-info/5' },
-          { label: 'Absentee', value: residents.filter(r => !r.isResident).length, icon: MapPin, color: 'text-warning', bg: 'bg-warning/5' },
+          { label: 'Total Verified', value: residents.filter((r: Resident) => r.isResident).length, icon: ShieldCheck, color: 'text-success', bg: 'bg-success/5' },
+          { label: 'Unit Owners', value: residents.filter((r: Resident) => r.role === ResidentRole.PRIMARY_OWNER).length, icon: Building, color: 'text-primary', bg: 'bg-primary/5' },
+          { label: 'Lease Holders', value: residents.filter((r: Resident) => r.role === ResidentRole.TENANT).length, icon: Users, color: 'text-info', bg: 'bg-info/5' },
+          { label: 'Absentee', value: residents.filter((r: Resident) => !r.isResident).length, icon: MapPin, color: 'text-warning', bg: 'bg-warning/5' },
         ].map((stat, i) => (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -185,7 +171,13 @@ export default function ResidentsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredResidents.map((resident) => (
+            {isLoadingInitial ? (
+              <TableRow>
+                <TableCell colSpan={5} className="p-8">
+                  <TableSkeleton rows={8} />
+                </TableCell>
+              </TableRow>
+            ) : filteredResidents.map((resident: Resident) => (
               <TableRow
                 key={resident.id}
                 onClick={() => handleResidentClick(resident)}
@@ -235,14 +227,31 @@ export default function ResidentsPage() {
             ))}
           </TableBody>
         </Table>
+
+        {!isLoadingInitial && filteredResidents.length === 0 && (
+          <div className="py-20 text-center flex flex-col items-center justify-center">
+            <div className="w-20 h-20 rounded-3xl bg-secondary/50 flex items-center justify-center text-muted-foreground/30 mb-6 border border-border/40">
+              <Search size={40} />
+            </div>
+            <h3 className="text-xl font-black text-foreground uppercase tracking-tight mb-2">Registry Mismatch</h3>
+            <p className="text-sm text-muted-foreground mb-8 max-w-xs mx-auto">
+              We couldn't find any residents matching "{searchQuery}" in the community ledger.
+            </p>
+            <Button 
+               variant="outline" 
+               onClick={() => setSearchQuery('')}
+               className="rounded-xl px-10 h-12 text-[10px] font-black uppercase tracking-widest"
+            >
+              Clear Search Buffer
+            </Button>
+          </div>
+        )}
       </div>
 
       <ResidentProfileDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         resident={selectedResident}
-        flats={flats}
-        allResidents={residents}
       />
 
       <RegisterMemberModal

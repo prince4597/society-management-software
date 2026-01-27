@@ -1,3 +1,6 @@
+import { ResidentRole } from '../../residents/types';
+export { ResidentRole };
+
 export enum OccupancyStatus {
     OWNER_OCCUPIED = 'OWNER_OCCUPIED',
     RENTED = 'RENTED',
@@ -26,13 +29,15 @@ export enum UnitType {
  * Resident reference for property associations
  * Minimal type to avoid circular dependencies with residents feature
  */
-interface ResidentReference {
+export interface ResidentReference {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
     phoneNumber: string;
-    role: 'PRIMARY_OWNER' | 'TENANT' | 'FAMILY_MEMBER';
+    role: ResidentRole;
+    flatIds: string[];
+    isResident: boolean;
 }
 
 export interface Flat {

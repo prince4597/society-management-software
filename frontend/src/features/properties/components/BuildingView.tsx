@@ -11,11 +11,10 @@ import { Resident } from '../../residents/types';
 interface BuildingViewProps {
   blockName: string;
   flats: Flat[];
-  residents: Resident[];
   onFlatClick: (flat: Flat) => void;
 }
 
-export const BuildingView = ({ blockName, flats, residents: _residents, onFlatClick }: BuildingViewProps) => {
+export const BuildingView = ({ blockName, flats, onFlatClick }: BuildingViewProps) => {
   const [hoveredFloor, setHoveredFloor] = useState<number | null>(null);
 
   const groupedByFloor = flats.reduce((acc: Record<number, Flat[]>, flat: Flat) => {

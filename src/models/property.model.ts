@@ -50,12 +50,11 @@ export interface PropertyAttributes {
 export interface PropertyCreationAttributes extends Optional<
   PropertyAttributes,
   'id' | 'ownerId' | 'tenantId' | 'squareFeet'
-> {}
+> { }
 
 class Property
   extends Model<PropertyAttributes, PropertyCreationAttributes>
-  implements PropertyAttributes
-{
+  implements PropertyAttributes {
   declare id: string;
   declare societyId: string;
   declare number: string;
@@ -149,6 +148,11 @@ Property.init(
     underscored: true,
     timestamps: true,
     paranoid: true,
+    scopes: {
+      tenant: (societyId: string) => ({
+        where: { societyId },
+      }),
+    },
   }
 );
 
