@@ -31,8 +31,16 @@ export abstract class BaseRepository<
     this.entityName = entityName;
   }
 
-  protected buildWhereClause(where?: Partial<Attributes>): WhereOptions {
-    return (where ?? {}) as WhereOptions;
+  public getModel(): ModelStatic<T> {
+    return this.model;
+  }
+
+  protected buildWhereClause(where?: Partial<Attributes> | Record<string, unknown>, societyId?: string): WhereOptions {
+    const whereClause: Record<string, unknown> = (where ?? {}) as Record<string, unknown>;
+    if (societyId) {
+      whereClause['societyId'] = societyId;
+    }
+    return whereClause as WhereOptions;
   }
 
   protected buildOrderClause(pagination?: PaginationParams): Order {
@@ -43,8 +51,12 @@ export abstract class BaseRepository<
   protected buildFindOptions(options?: FindOptions<Attributes>): SequelizeFindOptions {
     const findOptions: SequelizeFindOptions = {};
 
-    if (options?.where) {
-      findOptions.where = this.buildWhereClause(options.where);
+    if (options?.where || options?.societyId) {
+      findOptions.where = this.buildWhereClause(options.where, options.societyId) as WhereOptions;
+    }
+
+    if (options?.include) {
+      findOptions.include = options.include as SequelizeFindOptions['include'];
     }
 
     if (options?.pagination) {
@@ -54,13 +66,20 @@ export abstract class BaseRepository<
       findOptions.order = this.buildOrderClause(options.pagination);
     }
 
+    if (options?.paranoid !== undefined) {
+      findOptions.paranoid = options.paranoid;
+    }
+
     return findOptions;
   }
 
-  async findById(id: ID): Promise<Attributes | null> {
+  async findById(id: ID, societyId?: string): Promise<Attributes | null> {
     try {
-      const record = await this.model.findByPk(id as unknown as string | number);
-      return record ? record.toJSON() : null;
+      const where: Record<string, unknown> = { id };
+      if (societyId) where['societyId'] = societyId;
+
+      const record = await this.model.findOne({ where: where as WhereOptions });
+      return record ? (record.toJSON() as Attributes) : null;
     } catch (error) {
       logger.error(`${this.entityName}.findById failed:`, error);
       throw new DatabaseError(`Failed to find ${this.entityName}`);
@@ -70,7 +89,7 @@ export abstract class BaseRepository<
   async findOne(options: FindOptions<Attributes>): Promise<Attributes | null> {
     try {
       const record = await this.model.findOne(this.buildFindOptions(options));
-      return record ? record.toJSON() : null;
+      return record ? (record.toJSON() as Attributes) : null;
     } catch (error) {
       logger.error(`${this.entityName}.findOne failed:`, error);
       throw new DatabaseError(`Failed to find ${this.entityName}`);
@@ -80,7 +99,7 @@ export abstract class BaseRepository<
   async findAll(options?: FindOptions<Attributes>): Promise<Attributes[]> {
     try {
       const records = await this.model.findAll(this.buildFindOptions(options));
-      return records.map((record) => record.toJSON());
+      return records.map((record) => record.toJSON() as Attributes);
     } catch (error) {
       logger.error(`${this.entityName}.findAll failed:`, error);
       throw new DatabaseError(`Failed to fetch ${this.entityName} list`);
@@ -93,7 +112,7 @@ export abstract class BaseRepository<
       const { count, rows } = await this.model.findAndCountAll(this.buildFindOptions(options));
 
       return {
-        data: rows.map((record) => record.toJSON()),
+        data: rows.map((record) => record.toJSON() as Attributes),
         meta: calculatePaginationMeta(count, pagination.page, pagination.limit),
       };
     } catch (error) {
@@ -105,36 +124,40 @@ export abstract class BaseRepository<
   async create(data: CreateDTO): Promise<Attributes> {
     try {
       const record = await this.model.create(data as unknown as T['_creationAttributes']);
-      return record.toJSON();
+      return record.toJSON() as Attributes;
     } catch (error) {
       logger.error(`${this.entityName}.create failed:`, error);
       throw new DatabaseError(`Failed to create ${this.entityName}`);
     }
   }
 
-  async update(id: ID, data: UpdateDTO): Promise<Attributes | null> {
+  async update(id: ID, data: UpdateDTO, societyId?: string): Promise<Attributes | null> {
     try {
+      const where: Record<string, unknown> = { id };
+      if (societyId) where['societyId'] = societyId;
+
       const [affectedCount] = await this.model.update(
         data as unknown as Partial<T['_attributes']>,
-        { where: { id } as unknown as WhereOptions }
+        { where: where as WhereOptions }
       );
 
       if (affectedCount === 0) {
         return null;
       }
 
-      return this.findById(id);
+      return this.findById(id, societyId);
     } catch (error) {
       logger.error(`${this.entityName}.update failed:`, error);
       throw new DatabaseError(`Failed to update ${this.entityName}`);
     }
   }
 
-  async delete(id: ID): Promise<boolean> {
+  async delete(id: ID, societyId?: string): Promise<boolean> {
     try {
-      const affectedCount = await this.model.destroy({
-        where: { id } as unknown as WhereOptions,
-      });
+      const where: Record<string, unknown> = { id };
+      if (societyId) where['societyId'] = societyId;
+
+      const affectedCount = await this.model.destroy({ where: where as WhereOptions });
       return affectedCount > 0;
     } catch (error) {
       logger.error(`${this.entityName}.delete failed:`, error);
@@ -142,10 +165,10 @@ export abstract class BaseRepository<
     }
   }
 
-  async count(where?: Partial<Attributes>): Promise<number> {
+  async count(where?: Partial<Attributes> | Record<string, unknown>, societyId?: string): Promise<number> {
     try {
       return await this.model.count({
-        where: this.buildWhereClause(where),
+        where: this.buildWhereClause(where, societyId),
       });
     } catch (error) {
       logger.error(`${this.entityName}.count failed:`, error);
@@ -155,7 +178,7 @@ export abstract class BaseRepository<
 
   async exists(id: ID): Promise<boolean> {
     const count = await this.model.count({
-      where: { id } as unknown as WhereOptions,
+      where: { id } as Record<string, unknown> as WhereOptions,
     });
     return count > 0;
   }

@@ -47,3 +47,6 @@ export interface Resident {
     rentedProperties?: PropertyReference[];
 }
 
+export type CreateResidentInput = Omit<Resident, 'id' | 'ownedProperties' | 'rentedProperties'>;
+export type UpdateResidentInput = Partial<CreateResidentInput>;
+

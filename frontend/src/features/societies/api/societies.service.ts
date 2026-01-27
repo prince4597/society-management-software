@@ -104,4 +104,24 @@ export const societiesService = {
       throw error;
     }
   },
+
+  async getDashboardStats(): Promise<{
+    totalResidents: number;
+    totalProperties: number;
+    totalFlats: number;
+  }> {
+    try {
+      const response = await apiClient.get<
+        ApiResponse<{
+          totalResidents: number;
+          totalProperties: number;
+          totalFlats: number;
+        }>
+      >('/societies/dashboard/stats');
+      return response.data.data;
+    } catch (error) {
+      errorService.handleError(error, 'error');
+      throw error;
+    }
+  },
 };

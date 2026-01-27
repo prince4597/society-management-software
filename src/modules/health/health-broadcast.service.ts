@@ -1,7 +1,7 @@
 import { logger } from '../../utils/logger';
 import { socketManager } from '../../core/socket';
 import { collectHealthData } from './health.utils';
-import { globalStatsService } from '../../services/global-stats.service';
+import { dashboardService } from '../admin/dashboard/service';
 
 class HealthBroadcastService {
   private static instance: HealthBroadcastService;
@@ -9,7 +9,7 @@ class HealthBroadcastService {
   private readonly broadcastIntervalMs = 5000;
   private isRunning = false;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): HealthBroadcastService {
     if (!HealthBroadcastService.instance) {
@@ -45,7 +45,7 @@ class HealthBroadcastService {
     try {
       const [health, stats] = await Promise.all([
         collectHealthData(),
-        globalStatsService.getStats(),
+        dashboardService.getStats(),
       ]);
       socketManager.broadcastToAdmins('health:update', health);
       socketManager.broadcastToAdmins('system:stats:update', stats);
@@ -65,7 +65,7 @@ class HealthBroadcastService {
     try {
       const [health, stats] = await Promise.all([
         collectHealthData(),
-        globalStatsService.getStats(),
+        dashboardService.getStats(),
       ]);
       socketManager.broadcastToAdmins('health:update', health);
       socketManager.broadcastToAdmins('system:stats:update', stats);

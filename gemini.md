@@ -63,6 +63,7 @@ A file/module is considered **consistent** when it meets these requirements:
 7. **Documentation**: Swagger/JSDoc is up-to-date and accurate for all routes.
 
 ## Development Principles
+- **Zero-Any Policy**: Absolute type safety is mandatory. The use of `any` or `as any` is strictly prohibited. Use generics, concrete interfaces, and intersection types to maintain a 100% type-safe codebase.
 - **Streamlined Workflow**: Aim for maximum reusability and zero code duplication. Centralize shared types and logic.
 - **Clean Code**: Follow SOLID principles. Write expressive, self-documenting code with appropriate comments.
 - **Test-Driven Reliability**: Every code edit MUST be reflected in its corresponding test file. Tests must be kept "perfect" and passing at all times.

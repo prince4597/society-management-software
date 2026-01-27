@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { BaseController } from '../../core/base.controller';
 import { asyncHandler } from '../../types';
 import { societyService, OnboardResult } from './service';
+import { dashboardService } from '../admin/dashboard/service';
 import type { CreateSocietyInput, UpdateSocietyInput } from './dto';
 
 class SocietyController extends BaseController {
@@ -56,6 +57,17 @@ class SocietyController extends BaseController {
     const data = req.body as UpdateSocietyInput;
     const response = await societyService.update(societyId, data);
     return this.success(req, res, response.data, 'Society profile updated successfully');
+  });
+
+  getStats = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const societyId = req.user?.societyId;
+    if (!societyId) {
+      return res
+        .status(403)
+        .json({ success: false, message: 'No society associated with this account' });
+    }
+    const stats = await dashboardService.getSocietyStats(societyId);
+    return this.success(req, res, stats);
   });
 }
 

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { systemConfigService } from '../services/system-config.service';
+import { systemConfigService } from '../modules/system-config/service';
 import { logger } from '../utils/logger';
 
 /**

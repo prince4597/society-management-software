@@ -24,8 +24,8 @@ export abstract class BaseService<
     return { success: false, message, code };
   }
 
-  async findById(id: ID): Promise<ServiceResponse<T>> {
-    const entity = await this.repository.findById(id);
+  async findById(id: ID, societyId?: string): Promise<ServiceResponse<T>> {
+    const entity = await this.repository.findById(id, societyId);
     if (!entity) {
       throw new NotFoundError(this.entityName, id as unknown as string | number);
     }
@@ -42,14 +42,15 @@ export abstract class BaseService<
     return this.success(result);
   }
 
-  async create(data: CreateDTO): Promise<ServiceResponse<T>> {
-    const entity = await this.repository.create(data);
+  async create(data: CreateDTO, societyId?: string): Promise<ServiceResponse<T>> {
+    const createData = societyId ? ({ ...data, societyId } as CreateDTO & { societyId?: string }) : data;
+    const entity = await this.repository.create(createData as CreateDTO);
     logger.info(`${this.entityName} created successfully`);
     return this.success(entity, `${this.entityName} created successfully`);
   }
 
-  async update(id: ID, data: UpdateDTO): Promise<ServiceResponse<T>> {
-    const entity = await this.repository.update(id, data);
+  async update(id: ID, data: UpdateDTO, societyId?: string): Promise<ServiceResponse<T>> {
+    const entity = await this.repository.update(id, data, societyId);
     if (!entity) {
       throw new NotFoundError(this.entityName, id as unknown as string | number);
     }
@@ -57,8 +58,8 @@ export abstract class BaseService<
     return this.success(entity, `${this.entityName} updated successfully`);
   }
 
-  async delete(id: ID): Promise<ServiceResponse<boolean>> {
-    const deleted = await this.repository.delete(id);
+  async delete(id: ID, societyId?: string): Promise<ServiceResponse<boolean>> {
+    const deleted = await this.repository.delete(id, societyId);
     if (!deleted) {
       throw new NotFoundError(this.entityName, id as unknown as string | number);
     }

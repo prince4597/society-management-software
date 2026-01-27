@@ -1,63 +1,53 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { societiesService } from '../api/societies.service';
 import type { Society } from '@/types';
 import { formatPhoneNumber } from '@/infrastructure/utils/formatters';
 
 export const useSocietyProfile = () => {
-  const [society, setSociety] = useState<Society | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [success, setSuccess] = useState<string | null>(null);
 
-  const fetchProfile = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await societiesService.getMySociety();
-      setSociety(data);
-    } catch (err: unknown) {
-      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(
-        errorObj?.response?.data?.message || errorObj.message || 'Failed to fetch society profile'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: society,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['society-profile'],
+    queryFn: () => societiesService.getMySociety(),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<Society>) => societiesService.updateMySociety(data),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['society-profile'], updated);
+      setSuccess('Society profile updated successfully');
+      // Clear success after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    },
+  });
 
   const updateProfile = async (data: Partial<Society>) => {
-    setIsUpdating(true);
-    setError(null);
-    setSuccess(null);
     try {
-      const updated = await societiesService.updateMySociety(data);
-      setSociety(updated);
-      setSuccess('Society profile updated successfully');
-      return { success: true, data: updated };
+      const result = await updateMutation.mutateAsync(data);
+      return { success: true, data: result };
     } catch (err: unknown) {
-      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
-      const msg =
-        errorObj?.response?.data?.message || errorObj.message || 'Failed to update society profile';
-      setError(msg);
-      return { success: false, message: msg };
-    } finally {
-      setIsUpdating(false);
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Failed to update society profile',
+      };
     }
   };
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
 
   return {
     society,
     isLoading,
-    isUpdating,
-    error,
+    isUpdating: updateMutation.isPending,
+    error: (error instanceof Error ? error.message : null) || (updateMutation.error instanceof Error ? updateMutation.error.message : null),
     success,
     updateProfile,
-    refresh: fetchProfile,
+    refresh: refetch,
     formatPhone: formatPhoneNumber,
   };
 };

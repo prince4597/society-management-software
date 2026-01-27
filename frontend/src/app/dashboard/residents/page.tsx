@@ -34,51 +34,43 @@ import { OwnerBadge, TenantBadge, FamilyBadge } from '@/features/residents/compo
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
+import { useResidents } from '@/features/residents/hooks/useResidents';
+import { useProperties } from '@/features/properties/hooks/useProperties';
+
 export default function ResidentsPage() {
-  const [residents, setResidents] = useState<Resident[]>([]);
-  const [flats, setFlats] = useState<Flat[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { residents, isLoading: loadingResidents, refresh: refreshResidents } = useResidents();
+  const { properties: flats, isLoading: loadingFlats } = useProperties();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [residentsData, flatsData] = await Promise.all([
-        residentApi.findAll(),
-        propertyApi.findAll(),
-      ]);
-      setResidents(residentsData);
-      setFlats(flatsData);
-    } catch (error) {
-      console.error('Failed to fetch residents data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = loadingResidents || loadingFlats;
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    refreshResidents();
+  };
 
   function getFlatNumbers(resident: Resident) {
     const ids = [
       ...(resident.flatIds || []),
-      ...(resident.ownedProperties?.map(p => p.id) || []),
-      ...(resident.rentedProperties?.map(p => p.id) || [])
+      ...(resident.ownedProperties?.map((p) => p.id) || []),
+      ...(resident.rentedProperties?.map((p) => p.id) || []),
     ];
     const uniqueIds = Array.from(new Set(ids));
     if (uniqueIds.length === 0) return '';
-    return uniqueIds.map(id => flats.find(f => f.id === id)?.number).filter(Boolean).join(', ');
+    return uniqueIds
+      .map((id) => flats.find((f) => f.id === id)?.number)
+      .filter(Boolean)
+      .join(', ');
   }
 
-  const filteredResidents = residents.filter(r =>
-    `${r.firstName} ${r.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    getFlatNumbers(r).includes(searchQuery)
+  const filteredResidents = residents.filter(
+    (r) =>
+      `${r.firstName} ${r.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getFlatNumbers(r).includes(searchQuery)
   );
 
   const handleResidentClick = (resident: Resident) => {
@@ -86,7 +78,7 @@ export default function ResidentsPage() {
     setIsDrawerOpen(true);
   };
 
-  if (loading) {
+  if (loading && residents.length === 0) {
     return (
       <div className="flex h-[400px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

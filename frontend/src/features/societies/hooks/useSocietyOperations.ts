@@ -1,43 +1,55 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { societiesService } from '../api/societies.service';
 import type { Society } from '@/types';
 
 export const useSocietyOperations = (id?: string) => {
-  const [society, setSociety] = useState<Society | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const queryClient = useQueryClient();
 
-  const fetchSociety = useCallback(async () => {
-    if (!id) return;
-    setIsLoading(true);
-    try {
-      const data = await societiesService.getSocietyById(id);
-      setSociety(data);
-    } catch {
-      // Error handled by societiesService/errorService
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id]);
+  const {
+    data: society,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['society', id],
+    queryFn: () => (id ? societiesService.getSocietyById(id) : null),
+    enabled: !!id,
+  });
 
-  useEffect(() => {
-    fetchSociety();
-  }, [fetchSociety]);
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<Society>) => (id ? societiesService.updateSociety(id, data) : Promise.reject('ID required')),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['society', id], updated);
+      queryClient.invalidateQueries({ queryKey: ['societies'] });
+    },
+  });
+
+  const addAdminMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => (id ? societiesService.addAdmin(id, data) : Promise.reject('ID required')),
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const updateAdminMutation = useMutation({
+    mutationFn: ({ adminId, data }: { adminId: string; data: Partial<Society> }) => societiesService.updateAdmin(adminId, data),
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const deleteAdminMutation = useMutation({
+    mutationFn: (adminId: string) => societiesService.deleteAdmin(adminId),
+    onSuccess: () => {
+      refetch();
+    },
+  });
 
   const updateRecords = async (data: Partial<Society>) => {
-    if (!id) return { success: false, message: 'ID is required' };
-    setIsUpdating(true);
     try {
-      const updated = await societiesService.updateSociety(id, data);
-      setSociety(updated);
+      await updateMutation.mutateAsync(data);
       return { success: true };
     } catch (err: unknown) {
-      return {
-        success: false,
-        message: err instanceof Error ? err.message : 'Failed to update records',
-      };
-    } finally {
-      setIsUpdating(false);
+      return { success: false, message: err instanceof Error ? err.message : 'Failed to update records' };
     }
   };
 
@@ -46,78 +58,42 @@ export const useSocietyOperations = (id?: string) => {
     return updateRecords({ isActive: !society.isActive });
   };
 
-  const addAdministrativeNode = async (
-    formData: { phoneNumber: string } & Record<string, unknown>
-  ) => {
-    if (!id) return { success: false, message: 'ID is required' };
-
-    // Domain validation: Ensure phone record includes country code
-    const phoneNumber = formData.phoneNumber.trim();
-    const isValidFormat = phoneNumber.startsWith('+');
-
-    if (!isValidFormat) {
-      return {
-        success: false,
-        message: 'Validation Error: Phone record must include country code (e.g. +91)',
-      };
-    }
-
-    setIsUpdating(true);
+  const addAdministrativeNode = async (formData: Record<string, unknown>) => {
     try {
-      await societiesService.addAdmin(id, { ...formData, phoneNumber });
-      await fetchSociety();
+      await addAdminMutation.mutateAsync(formData);
       return { success: true };
     } catch (err: unknown) {
-      return {
-        success: false,
-        message: err instanceof Error ? err.message : 'Failed to register admin',
-      };
-    } finally {
-      setIsUpdating(false);
+      return { success: false, message: err instanceof Error ? err.message : 'Failed to register admin' };
     }
   };
 
   const transitionAdminStatus = async (adminId: string, isActive: boolean) => {
-    setIsUpdating(true);
     try {
-      await societiesService.updateAdmin(adminId, { isActive });
-      await fetchSociety();
+      await updateAdminMutation.mutateAsync({ adminId, data: { isActive } });
       return { success: true };
     } catch (err: unknown) {
-      return {
-        success: false,
-        message: err instanceof Error ? err.message : 'Failed to update admin status',
-      };
-    } finally {
-      setIsUpdating(false);
+      return { success: false, message: err instanceof Error ? err.message : 'Failed to update admin' };
     }
   };
 
   const purgeAdminNode = async (adminId: string) => {
-    setIsUpdating(true);
     try {
-      await societiesService.deleteAdmin(adminId);
-      await fetchSociety();
+      await deleteAdminMutation.mutateAsync(adminId);
       return { success: true };
     } catch (err: unknown) {
-      return {
-        success: false,
-        message: err instanceof Error ? err.message : 'Failed to purge node',
-      };
-    } finally {
-      setIsUpdating(false);
+      return { success: false, message: err instanceof Error ? err.message : 'Failed to purge node' };
     }
   };
 
   return {
     society,
     isLoading,
-    isUpdating,
+    isUpdating: updateMutation.isPending || addAdminMutation.isPending || updateAdminMutation.isPending || deleteAdminMutation.isPending,
     updateRecords,
     toggleSocietyStatus,
     addAdministrativeNode,
     transitionAdminStatus,
     purgeAdminNode,
-    refresh: fetchSociety,
+    refresh: refetch,
   };
 };

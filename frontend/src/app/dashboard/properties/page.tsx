@@ -17,10 +17,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 type ViewMode = 'grid' | 'building';
 
+import { useResidents } from '@/features/residents/hooks/useResidents';
+import { useProperties } from '@/features/properties/hooks/useProperties';
+
 export default function PropertiesPage() {
-  const [flats, setFlats] = useState<Flat[]>([]);
-  const [residents, setResidents] = useState<Resident[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { properties: flats, isLoading: loadingFlats, refresh: refreshFlats } = useProperties();
+  const { residents, isLoading: loadingResidents } = useResidents();
 
   const [selectedFlat, setSelectedFlat] = useState<Flat | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -29,38 +31,34 @@ export default function PropertiesPage() {
   const [selectedBlock, setSelectedBlock] = useState('A');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  const loading = loadingFlats || loadingResidents;
+
   const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [flatsData, residentsData] = await Promise.all([
-        propertyApi.findAll(),
-        residentApi.findAll(),
-      ]);
-      setFlats(flatsData);
-      setResidents(residentsData);
-      if (flatsData.length > 0 && !selectedBlock) {
-        setSelectedBlock(flatsData[0].block);
-      }
-    } catch (error) {
-      console.error('Failed to fetch properties data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedBlock]);
+    refreshFlats();
+  }, [refreshFlats]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (flats.length > 0 && !selectedBlock) {
+      setSelectedBlock(flats[0].block);
+    }
+  }, [flats, selectedBlock]);
 
   // Blocks present in data
-  const blocks = useMemo(() => Array.from(new Set(flats.map(f => f.block))).sort(), [flats]);
+  const blocks = useMemo(
+    () => Array.from(new Set(flats.map((f) => f.block))).sort(),
+    [flats]
+  );
 
   // Filter flats by current block and search query
   const filteredFlats = useMemo(() => {
-    return flats.filter(f =>
-      f.block === selectedBlock &&
-      (f.number.includes(searchQuery) ||
-        residents.find(r => r.id === f.ownerId)?.firstName.toLowerCase().includes(searchQuery.toLowerCase()))
+    return flats.filter(
+      (f) =>
+        f.block === selectedBlock &&
+        (f.number.includes(searchQuery) ||
+          residents
+            .find((r) => r.id === f.ownerId)
+            ?.firstName.toLowerCase()
+            .includes(searchQuery.toLowerCase()))
     );
   }, [selectedBlock, searchQuery, flats, residents]);
 
@@ -73,17 +71,21 @@ export default function PropertiesPage() {
     }, {} as Record<number, Flat[]>);
   }, [filteredFlats]);
 
-  const floors = useMemo(() => Object.keys(groupedFlats).map(Number).sort((a, b) => b - a), [groupedFlats]);
+  const floors = useMemo(
+    () => Object.keys(groupedFlats).map(Number).sort((a, b) => b - a),
+    [groupedFlats]
+  );
 
-  const getOwner = (ownerId: string) => residents.find(r => r.id === ownerId);
-  const getTenant = (tenantId?: string) => tenantId ? residents.find(r => r.id === tenantId) : undefined;
+  const getOwner = (ownerId: string) => residents.find((r) => r.id === ownerId);
+  const getTenant = (tenantId?: string) =>
+    tenantId ? residents.find((r) => r.id === tenantId) : undefined;
 
   const handleFlatClick = (flat: Flat) => {
     setSelectedFlat(flat);
     setIsDrawerOpen(true);
   };
 
-  if (loading) {
+  if (loading && flats.length === 0) {
     return (
       <div className="flex h-[400px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

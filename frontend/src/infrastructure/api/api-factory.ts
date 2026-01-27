@@ -29,7 +29,7 @@ export const createApiService = <T, CreateDTO = Partial<T>, UpdateDTO = Partial<
       return response.data.data;
     },
     update: async (id: string, data: UpdateDTO): Promise<T> => {
-      const response = await apiClient.put(`${resourcePath}/${id}`, data);
+      const response = await apiClient.patch(`${resourcePath}/${id}`, data);
       return response.data.data;
     },
     delete: async (id: string): Promise<void> => {

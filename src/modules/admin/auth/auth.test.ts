@@ -86,7 +86,7 @@ describe('Admin Auth Module (Integration)', () => {
         .send({ email: 'wrong@example.com', password: 'password123' });
 
       expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
-      const body = response.body as ApiResponse;
+      const body = response.body as ApiResponse<any>;
       expect(body.success).toBe(false);
       expect(body.code).toBe('UNAUTHORIZED');
     });
@@ -97,7 +97,7 @@ describe('Admin Auth Module (Integration)', () => {
         .send({ email: 'admin@example.com', password: 'wrongpassword' });
 
       expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
-      const body = response.body as ApiResponse;
+      const body = response.body as ApiResponse<any>;
       expect(body.success).toBe(false);
     });
 
@@ -109,7 +109,7 @@ describe('Admin Auth Module (Integration)', () => {
         .send({ email: 'admin@example.com', password: 'password123' });
 
       expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
-      const body = response.body as ApiResponse;
+      const body = response.body as ApiResponse<any>;
       expect(body.success).toBe(false);
     });
 
@@ -119,7 +119,7 @@ describe('Admin Auth Module (Integration)', () => {
         .send({ email: 'admin<script>alert(1)</script>@example.com', password: 'password123' });
 
       expect(response.status).toBe(HttpStatus.UNPROCESSABLE_ENTITY);
-      const body = response.body as ApiResponse;
+      const body = response.body as ApiResponse<any>;
       expect(body.success).toBe(false);
     });
   });

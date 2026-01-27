@@ -195,4 +195,11 @@ router.patch(
   societyController.updateMySociety
 );
 
+router.get(
+  '/dashboard/stats',
+  authenticate,
+  authorize([RoleName.SOCIETY_ADMIN]),
+  societyController.getStats
+);
+
 export const societyRoutes = router;

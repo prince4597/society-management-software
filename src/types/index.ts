@@ -34,14 +34,14 @@ export interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
-export interface ServiceResponse<T = unknown> {
+export interface ServiceResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
   code?: string;
 }
 
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
@@ -61,30 +61,32 @@ export interface ApiErrorResponse {
   stack?: string;
 }
 
-export interface FindOptions<T = unknown> {
-  where?: Partial<T>;
+export interface FindOptions<T> {
+  where?: Partial<T> | Record<string, unknown>;
   pagination?: PaginationParams;
-  include?: string[];
+  include?: (string | object)[];
+  societyId?: string;
+  paranoid?: boolean;
 }
 
 export interface IRepository<T, CreateDTO, UpdateDTO, ID = string | number> {
-  findById(id: ID): Promise<T | null>;
+  findById(id: ID, societyId?: string): Promise<T | null>;
   findOne(options: FindOptions<T>): Promise<T | null>;
   findAll(options?: FindOptions<T>): Promise<T[]>;
   findAllPaginated(options: FindOptions<T>): Promise<PaginatedResult<T>>;
   create(data: CreateDTO): Promise<T>;
-  update(id: ID, data: UpdateDTO): Promise<T | null>;
-  delete(id: ID): Promise<boolean>;
-  count(where?: Partial<T>): Promise<number>;
+  update(id: ID, data: UpdateDTO, societyId?: string): Promise<T | null>;
+  delete(id: ID, societyId?: string): Promise<boolean>;
+  count(where?: Partial<T>, societyId?: string): Promise<number>;
 }
 
 export interface IService<T, CreateDTO, UpdateDTO, ID = string | number> {
-  findById(id: ID): Promise<ServiceResponse<T>>;
+  findById(id: ID, societyId?: string): Promise<ServiceResponse<T>>;
   findAll(options?: FindOptions<T>): Promise<ServiceResponse<T[]>>;
   findAllPaginated(options: FindOptions<T>): Promise<ServiceResponse<PaginatedResult<T>>>;
-  create(data: CreateDTO): Promise<ServiceResponse<T>>;
-  update(id: ID, data: UpdateDTO): Promise<ServiceResponse<T>>;
-  delete(id: ID): Promise<ServiceResponse<boolean>>;
+  create(data: CreateDTO, societyId?: string): Promise<ServiceResponse<T>>;
+  update(id: ID, data: UpdateDTO, societyId?: string): Promise<ServiceResponse<T>>;
+  delete(id: ID, societyId?: string): Promise<ServiceResponse<boolean>>;
 }
 
 export interface RequestContext {

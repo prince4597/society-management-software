@@ -1,12 +1,14 @@
-import { SystemConfig } from '../models';
-import { logger } from '../utils/logger';
-import { broadcastToAdmins } from '../core/socket';
-import { createSingleton } from '../core/singleton';
+import { systemConfigRepository } from './repository';
+import { logger } from '../../utils/logger';
+import { broadcastToAdmins } from '../../core/socket';
+import { createSingleton } from '../../core/singleton';
 
 class SystemConfigService {
   async get(key: string, defaultValue: unknown = null): Promise<unknown> {
     try {
-      const config = await SystemConfig.findOne({ where: { key } });
+      const config = await systemConfigRepository.findOne({
+        where: { key } as Record<string, unknown>,
+      });
       return config ? config.value : defaultValue;
     } catch (error) {
       logger.error(`Error getting config ${key}:`, error);
@@ -16,7 +18,7 @@ class SystemConfigService {
 
   async set(key: string, value: unknown, description?: string): Promise<void> {
     try {
-      await SystemConfig.upsert({
+      await systemConfigRepository.getModel().upsert({
         key,
         value,
         description,

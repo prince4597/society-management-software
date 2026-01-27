@@ -9,7 +9,7 @@ describe('Global App Integration', () => {
       const response = await request(app).get('/');
 
       expect(response.status).toBe(HttpStatus.OK);
-      const body = response.body as ApiResponse;
+      const body = response.body as ApiResponse<any>;
       expect(body).toMatchObject({
         success: true,
         data: {
@@ -28,7 +28,7 @@ describe('Global App Integration', () => {
     it('should return 404 with standard JSON for non-existent routes', async () => {
       const response = await request(app).get('/api/v1/unknown-route-totally-not-real');
       expect(response.status).toBe(HttpStatus.NOT_FOUND);
-      const body = response.body as ApiResponse;
+      const body = response.body as ApiResponse<any>;
       expect(body).toMatchObject({
         success: false,
         code: 'NOT_FOUND',

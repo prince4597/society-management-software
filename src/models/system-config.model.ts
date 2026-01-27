@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 
-interface SystemConfigAttributes {
+export interface SystemConfigAttributes {
   id: string;
   key: string;
   value: unknown;
@@ -11,15 +11,14 @@ interface SystemConfigAttributes {
   updatedAt?: Date;
 }
 
-type SystemConfigCreationAttributes = Optional<
+export type SystemConfigCreationAttributes = Optional<
   SystemConfigAttributes,
   'id' | 'description' | 'isPublic'
 >;
 
 class SystemConfig
   extends Model<SystemConfigAttributes, SystemConfigCreationAttributes>
-  implements SystemConfigAttributes
-{
+  implements SystemConfigAttributes {
   declare id: string;
   declare key: string;
   declare value: unknown;

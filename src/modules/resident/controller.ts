@@ -26,9 +26,10 @@ class ResidentController extends BaseController {
   });
 
   update = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const societyId = req.user!.societyId!;
     const id = req.params['id'] as string;
     const data = req.body as UpdateResidentInput;
-    const serviceResponse = await residentService.update(id, data);
+    const serviceResponse = await residentService.update(id, data, societyId);
     return this.success(req, res, serviceResponse.data, 'Resident updated successfully');
   });
 

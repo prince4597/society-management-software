@@ -1,13 +1,14 @@
 import { Transaction } from 'sequelize';
 import { sequelize } from '../../config/database';
-import { Society, Admin } from '../../models';
+import { adminRepository } from '../admin/repository';
 import { logger } from '../../utils/logger';
-import { ConflictError, NotFoundError, BadRequestError } from '../../middleware/errors';
+import { ConflictError, NotFoundError } from '../../middleware/errors';
 import { RoleName } from '../../constants/roles';
 import { BaseService } from '../../core/base.service';
 import { societyRepository, SocietyRepository } from './repository';
 import type { CreateSocietyInput, UpdateSocietyInput } from './dto';
 import type { SocietyAttributes } from '../../models/society.model';
+import type { AdminAttributes } from '../../models/admin.model';
 
 export interface OnboardResult {
   society: SocietyAttributes;
@@ -31,6 +32,10 @@ export interface SocietyDetailResult extends SocietyAttributes {
   }>;
 }
 
+interface SocietyWithAdmins extends SocietyAttributes {
+  admins?: AdminAttributes[];
+}
+
 class SocietyService extends BaseService<
   SocietyAttributes,
   CreateSocietyInput['society'],
@@ -47,21 +52,21 @@ class SocietyService extends BaseService<
   async onboardSociety(input: CreateSocietyInput): Promise<OnboardResult> {
     const { society: societyData, admin: adminData } = input;
 
-    const existingCode = await this.repository.findByCode(societyData.code);
+    const existingCode = await this.recordExists({ code: societyData.code.trim().toUpperCase() });
     if (existingCode) {
       throw new ConflictError(`Society with code "${societyData.code}" already exists`);
     }
 
-    const existingEmail = await Admin.findOne({
-      where: { email: adminData.email },
+    const existingEmail = await adminRepository.findOne({
+      where: { email: adminData.email } as Record<string, unknown>,
       paranoid: false,
     });
     if (existingEmail) {
       throw new ConflictError(`Admin with email "${adminData.email}" already exists`);
     }
 
-    const existingPhone = await Admin.findOne({
-      where: { phoneNumber: adminData.phoneNumber },
+    const existingPhone = await adminRepository.findOne({
+      where: { phoneNumber: adminData.phoneNumber } as Record<string, unknown>,
       paranoid: false,
     });
     if (existingPhone) {
@@ -70,18 +75,8 @@ class SocietyService extends BaseService<
 
     const transaction: Transaction = await sequelize.transaction();
 
-    const phoneRegex = /^\+\d{2}\s\d{10}$/;
-    const validatePhone = (p?: string): string | undefined => {
-      if (p && !phoneRegex.test(p.trim())) {
-        throw new BadRequestError(
-          'Invalid phone format. Protocol: +CC XXXXXXXXXX (e.g. +91 9876543210)'
-        );
-      }
-      return p?.trim();
-    };
-
     try {
-      const society = await Society.create(
+      const societyModel = await societyRepository.getModel().create(
         {
           name: societyData.name.trim(),
           code: societyData.code.trim().toUpperCase(),
@@ -91,20 +86,20 @@ class SocietyService extends BaseService<
           country: societyData.country?.trim() || 'India',
           zipCode: societyData.zipCode.trim(),
           email: societyData.email?.trim() || undefined,
-          phone: validatePhone(societyData.phone),
+          phone: societyData.phone?.trim(),
           totalFlats: societyData.totalFlats || 0,
         },
         { transaction }
       );
 
-      const admin = await Admin.create(
+      const adminModel = await adminRepository.getModel().create(
         {
           role: RoleName.SOCIETY_ADMIN,
-          societyId: society.id,
+          societyId: societyModel.id,
           firstName: adminData.firstName.trim(),
           lastName: adminData.lastName.trim(),
           email: adminData.email.trim(),
-          phoneNumber: validatePhone(adminData.phoneNumber)!,
+          phoneNumber: adminData.phoneNumber.trim(),
           password: adminData.password,
         },
         { transaction }
@@ -112,15 +107,15 @@ class SocietyService extends BaseService<
 
       await transaction.commit();
 
-      logger.info(`Society "${society.name}" onboarded with admin ${admin.email}`);
+      logger.info(`Society "${societyModel.name}" onboarded with admin ${adminModel.email}`);
 
       return {
-        society: society.toJSON(),
+        society: societyModel.toJSON() as SocietyAttributes,
         admin: {
-          id: admin.id,
-          email: admin.email,
-          firstName: admin.firstName,
-          lastName: admin.lastName,
+          id: adminModel.id,
+          email: adminModel.email,
+          firstName: adminModel.firstName,
+          lastName: adminModel.lastName,
         },
       };
     } catch (error) {
@@ -130,41 +125,30 @@ class SocietyService extends BaseService<
     }
   }
 
+  private async recordExists(where: Record<string, unknown>): Promise<boolean> {
+    const count = await this.repository.count(where);
+    return count > 0;
+  }
+
   async getSocietyDetails(id: string): Promise<SocietyDetailResult> {
-    const society = await Society.findByPk(id, {
+    const society = await this.repository.findOne({
+      where: { id } as Record<string, unknown>,
       include: [
         {
-          model: Admin,
+          model: adminRepository.getModel(),
           as: 'admins',
           attributes: { exclude: ['password'] },
         },
       ],
-    });
+    }) as SocietyWithAdmins | null;
 
     if (!society) {
       throw new NotFoundError('Society', id);
     }
 
-    const societyJson = society.get({ plain: true }) as SocietyAttributes & {
-      admins: Array<Admin>;
-    };
-
     return {
-      id: societyJson.id,
-      name: societyJson.name,
-      code: societyJson.code,
-      address: societyJson.address,
-      city: societyJson.city,
-      state: societyJson.state,
-      country: societyJson.country,
-      zipCode: societyJson.zipCode,
-      email: societyJson.email,
-      phone: societyJson.phone,
-      totalFlats: societyJson.totalFlats,
-      isActive: societyJson.isActive,
-      createdAt: societyJson.createdAt,
-      updatedAt: societyJson.updatedAt,
-      admins: (societyJson.admins || []).map((admin) => ({
+      ...society,
+      admins: (society.admins || []).map((admin) => ({
         id: admin.id,
         firstName: admin.firstName,
         lastName: admin.lastName,
@@ -176,18 +160,10 @@ class SocietyService extends BaseService<
     };
   }
 
-  async getAdmins(societyId: string): Promise<Admin[]> {
-    const society = await Society.findByPk(societyId);
-    if (!society) {
-      throw new NotFoundError('Society', societyId);
-    }
-
-    const admins = await Admin.findAll({
-      where: { societyId },
-      attributes: { exclude: ['password'] },
+  async getAdmins(societyId: string): Promise<AdminAttributes[]> {
+    return adminRepository.findAll({
+      where: { societyId } as Record<string, unknown>,
     });
-
-    return admins;
   }
 }
 

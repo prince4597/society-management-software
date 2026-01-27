@@ -4,7 +4,7 @@ import { sequelize } from '../config/database';
 import Society from './society.model';
 import { RoleName, VALID_ROLES } from '../constants/roles';
 
-interface AdminAttributes {
+export interface AdminAttributes {
   id: string;
   role: string;
   societyId?: string;
@@ -21,7 +21,7 @@ interface AdminAttributes {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface AdminCreationAttributes extends Optional<AdminAttributes, 'id' | 'isActive'> {}
+export interface AdminCreationAttributes extends Optional<AdminAttributes, 'id' | 'isActive'> { }
 
 class Admin extends Model<AdminAttributes, AdminCreationAttributes> implements AdminAttributes {
   declare id: string;

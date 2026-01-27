@@ -1,8 +1,7 @@
-import { Resident, Property } from '../../models';
-import { logger } from '../../utils/logger';
 import { ConflictError, NotFoundError } from '../../middleware/errors';
 import { BaseService } from '../../core/base.service';
 import { residentRepository, ResidentRepository } from './repository';
+import { propertyRepository } from '../property/repository';
 import type { CreateResidentInput, UpdateResidentInput } from './dto';
 import type { ResidentAttributes } from '../../models/resident.model';
 
@@ -30,50 +29,53 @@ class ResidentService extends BaseService<
       );
     }
 
-    const resident = await this.repository.create({
-      ...input,
-      societyId,
-    } as CreateResidentInput & { societyId: string });
-
-    logger.info(`Resident ${resident.id} created for society ${societyId}`);
-    return resident;
+    const response = await this.create(input, societyId);
+    return response.data!;
   }
 
   async findAllInSociety(societyId: string): Promise<ResidentAttributes[]> {
-    const residents = await Resident.findAll({
-      where: { societyId },
+    const response = await this.findAll({
+      societyId,
       include: [
-        { model: Property, as: 'ownedProperties', attributes: ['id', 'number', 'block', 'floor'] },
-        { model: Property, as: 'rentedProperties', attributes: ['id', 'number', 'block', 'floor'] },
+        {
+          model: propertyRepository.getModel(),
+          as: 'ownedProperties',
+          attributes: ['id', 'number', 'block', 'floor'],
+        },
+        {
+          model: propertyRepository.getModel(),
+          as: 'rentedProperties',
+          attributes: ['id', 'number', 'block', 'floor'],
+        },
       ],
-      order: [
-        ['firstName', 'ASC'],
-        ['lastName', 'ASC'],
-      ],
+      where: { societyId } as Record<string, unknown>,
     });
-    return residents.map((r) => r.toJSON());
+    return response.data!;
   }
 
   async findByIdInSociety(societyId: string, id: string): Promise<ResidentAttributes> {
-    const resident = await Resident.findOne({
-      where: { id, societyId },
+    const resident = await this.repository.findOne({
+      where: { id, societyId } as Record<string, unknown>,
       include: [
-        { model: Property, as: 'ownedProperties', attributes: ['id', 'number', 'block', 'floor'] },
-        { model: Property, as: 'rentedProperties', attributes: ['id', 'number', 'block', 'floor'] },
+        {
+          model: propertyRepository.getModel(),
+          as: 'ownedProperties',
+          attributes: ['id', 'number', 'block', 'floor'],
+        },
+        {
+          model: propertyRepository.getModel(),
+          as: 'rentedProperties',
+          attributes: ['id', 'number', 'block', 'floor'],
+        },
       ],
     });
 
-    if (!resident) {
-      throw new NotFoundError('Resident', id);
-    }
-
-    return resident.toJSON();
+    if (!resident) throw new NotFoundError('Resident', id);
+    return resident;
   }
 
   async deleteFromSociety(societyId: string, id: string): Promise<void> {
-    const affected = await Resident.destroy({ where: { id, societyId } });
-    if (affected === 0) throw new NotFoundError('Resident', id);
-    logger.info(`Resident ${id} deleted from society ${societyId}`);
+    await this.delete(id, societyId);
   }
 }
 

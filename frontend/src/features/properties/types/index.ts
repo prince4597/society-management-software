@@ -50,3 +50,6 @@ export interface Flat {
     residents?: ResidentReference[];
 }
 
+export type CreateFlatInput = Omit<Flat, 'id' | 'residents'>;
+export type UpdateFlatInput = Partial<CreateFlatInput>;
+

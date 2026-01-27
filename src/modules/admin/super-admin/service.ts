@@ -1,7 +1,9 @@
-import { Admin, Society } from '../../../models';
+import { adminRepository } from '../repository';
+import { societyRepository } from '../../society/repository';
 import { NotFoundError, BadRequestError } from '../../../middleware/errors';
 import { logger } from '../../../utils/logger';
 import { RoleName } from '../../../constants/roles';
+import type { AdminAttributes } from '../../../models/admin.model';
 
 export interface AdminNodeData {
   email: string;
@@ -9,17 +11,17 @@ export interface AdminNodeData {
   firstName: string;
   lastName: string;
   password?: string;
-  [key: string]: unknown;
 }
 
 export interface UpdateAdminData {
   isActive?: boolean;
-  [key: string]: unknown;
 }
 
+export type AdminResponse = Omit<AdminAttributes, 'password'>;
+
 class SuperAdminService {
-  async addAdmin(societyId: string, data: AdminNodeData): Promise<Record<string, unknown>> {
-    const society = await Society.findByPk(societyId);
+  async addAdmin(societyId: string, data: AdminNodeData): Promise<AdminResponse> {
+    const society = await societyRepository.findById(societyId);
     if (!society) {
       throw new NotFoundError('Society', societyId);
     }
@@ -33,16 +35,19 @@ class SuperAdminService {
       );
     }
 
-    const existingAdmin = await Admin.findOne({
-      where: { email },
+    const existingAdmin = await adminRepository.findOne({
+      where: { email } as Record<string, unknown>,
       paranoid: false,
     });
 
     if (existingAdmin) {
       if (existingAdmin.deletedAt) {
         // Restore and update soft-deleted admin
-        await existingAdmin.restore();
-        await existingAdmin.update({
+        const adminModel = await adminRepository.getModel().findByPk(existingAdmin.id, { paranoid: false });
+        if (!adminModel) throw new NotFoundError('Admin', existingAdmin.id);
+
+        await adminModel.restore();
+        await adminModel.update({
           firstName,
           lastName,
           phoneNumber,
@@ -53,27 +58,28 @@ class SuperAdminService {
         });
 
         logger.info(`Super Admin restored soft-deleted admin ${email} for society ${societyId}`);
-        const adminJson = existingAdmin.toJSON() as unknown as Record<string, unknown>;
-        delete adminJson.password;
-        return adminJson;
+        const adminJson = adminModel.toJSON() as AdminAttributes;
+        const { password: _password, ...rest } = adminJson;
+        return rest;
       }
 
-      const otherSociety = await Society.findByPk(existingAdmin.societyId);
+      const otherSocietyId = existingAdmin.societyId;
+      const otherSociety = otherSocietyId ? await societyRepository.findById(otherSocietyId) : null;
       const societyMsg = otherSociety
         ? `active in society "${otherSociety.name}"`
         : 'already exists';
       throw new BadRequestError(`Admin with email "${email}" ${societyMsg}`);
     }
 
-    const existingPhone = await Admin.findOne({
-      where: { phoneNumber },
+    const existingPhone = await adminRepository.findOne({
+      where: { phoneNumber } as Record<string, unknown>,
       paranoid: false,
     });
     if (existingPhone && !existingPhone.deletedAt) {
       throw new BadRequestError(`Admin with phone "${phoneNumber}" already exists`);
     }
 
-    const admin = await Admin.create({
+    const admin = await adminRepository.create({
       firstName,
       lastName,
       email,
@@ -86,40 +92,38 @@ class SuperAdminService {
 
     logger.info(`Super Admin added new admin ${email} for society ${societyId}`);
 
-    // Return admin without password
-    const adminJson = admin.toJSON() as unknown as Record<string, unknown>;
-    delete adminJson.password;
+    const { password: _password, ...adminJson } = admin;
     return adminJson;
   }
 
-  async updateAdmin(adminId: string, data: UpdateAdminData): Promise<Record<string, unknown>> {
-    const admin = await Admin.findByPk(adminId);
+  async updateAdmin(adminId: string, data: UpdateAdminData): Promise<AdminResponse> {
+    const admin = await adminRepository.findById(adminId);
     if (!admin) {
       throw new NotFoundError('Admin', adminId);
     }
 
-    // We only want to update specific fields like isActive
+    const updateData: Partial<AdminAttributes> = {};
     if (data.isActive !== undefined) {
-      admin.isActive = data.isActive;
+      updateData.isActive = data.isActive;
     }
 
-    // Other fields can be updated here if needed in the future
+    const updated = await adminRepository.update(adminId, updateData);
+    if (!updated) {
+      throw new NotFoundError('Admin', adminId);
+    }
 
-    await admin.save();
     logger.info(`Admin ${adminId} updated by Super Admin`);
 
-    const adminJson = admin.toJSON() as unknown as Record<string, unknown>;
-    delete adminJson.password;
+    const { password: _password, ...adminJson } = updated;
     return adminJson;
   }
 
   async deleteAdmin(adminId: string): Promise<{ message: string }> {
-    const admin = await Admin.findByPk(adminId);
-    if (!admin) {
+    const affected = await adminRepository.delete(adminId);
+    if (!affected) {
       throw new NotFoundError('Admin', adminId);
     }
 
-    await admin.destroy(); // Soft delete because paranoid is true in model
     logger.info(`Admin ${adminId} soft-deleted by Super Admin`);
     return { message: 'Admin deleted successfully' };
   }

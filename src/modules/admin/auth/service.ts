@@ -1,23 +1,18 @@
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
-import Admin from '../../../models/admin.model';
-import Society from '../../../models/society.model';
+import { adminRepository } from '../repository';
+import { societyRepository } from '../../society/repository';
 import { UnauthorizedError, BadRequestError, ConflictError } from '../../../middleware/errors';
 import { signToken } from '../../../utils/jwt';
 import { LoginInput } from './dto';
+import type { AdminAttributes } from '../../../models/admin.model';
+import type { SocietyAttributes } from '../../../models/society.model';
 
-export interface AdminProfile {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  email: string;
-  role: string;
+export interface AdminProfile extends Omit<AdminAttributes, 'password'> {
   society?: {
     id: string;
     name: string;
   };
-  lastLogin: Date | null;
 }
 
 export interface LoginResponse {
@@ -25,31 +20,39 @@ export interface LoginResponse {
   admin: AdminProfile;
 }
 
+interface AdminWithSociety extends AdminAttributes {
+  society?: SocietyAttributes;
+}
+
 export class AuthService {
   public async login(input: LoginInput): Promise<LoginResponse> {
-    const admin = await Admin.findOne({
-      where: { email: input.email, isActive: true },
+    const admin = await adminRepository.findOne({
+      where: { email: input.email, isActive: true } as Record<string, unknown>,
       include: [
         {
-          model: Society,
+          model: societyRepository.getModel(),
           as: 'society',
           attributes: ['id', 'name'],
         },
       ],
-    });
+    }) as AdminWithSociety | null;
 
     if (!admin) {
       throw new UnauthorizedError('Invalid email or password');
     }
 
-    const isPasswordValid = await bcrypt.compare(input.password, admin.password);
+    const password = admin.password;
+    if (!password) {
+      throw new UnauthorizedError('Invalid email or password');
+    }
+
+    const isPasswordValid = await bcrypt.compare(input.password, password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedError('Invalid email or password');
     }
 
-    admin.lastLogin = new Date();
-    await admin.save();
+    await adminRepository.update(admin.id, { lastLogin: new Date() });
 
     const token = signToken({
       id: admin.id,
@@ -66,21 +69,25 @@ export class AuthService {
         email: admin.email,
         phoneNumber: admin.phoneNumber,
         role: admin.role,
+        isActive: admin.isActive,
         society: admin.society
           ? {
-              id: admin.society.id,
-              name: admin.society.name,
-            }
+            id: admin.society.id,
+            name: admin.society.name,
+          }
           : undefined,
-        lastLogin: admin.lastLogin || null,
+        lastLogin: admin.lastLogin || undefined,
+        createdAt: admin.createdAt,
+        updatedAt: admin.updatedAt,
       },
     };
   }
 
   public async getProfile(adminId: string): Promise<AdminProfile> {
-    const admin = await Admin.findByPk(adminId, {
-      include: [{ model: Society, as: 'society', attributes: ['id', 'name'] }],
-    });
+    const admin = await adminRepository.findOne({
+      where: { id: adminId } as Record<string, unknown>,
+      include: [{ model: societyRepository.getModel(), as: 'society', attributes: ['id', 'name'] }],
+    }) as AdminWithSociety | null;
 
     if (!admin || !admin.isActive) {
       throw new UnauthorizedError('Account not found or inactive');
@@ -93,43 +100,45 @@ export class AuthService {
       email: admin.email,
       phoneNumber: admin.phoneNumber,
       role: admin.role,
+      isActive: admin.isActive,
       society: admin.society
         ? {
-            id: admin.society.id,
-            name: admin.society.name,
-          }
+          id: admin.society.id,
+          name: admin.society.name,
+        }
         : undefined,
-      lastLogin: admin.lastLogin || null,
+      lastLogin: admin.lastLogin || undefined,
+      createdAt: admin.createdAt,
+      updatedAt: admin.updatedAt,
     };
   }
 
   public async updateProfile(adminId: string, input: Partial<AdminProfile>): Promise<AdminProfile> {
-    const admin = await Admin.findByPk(adminId, {
-      include: [{ model: Society, as: 'society', attributes: ['id', 'name'] }],
-    });
+    const admin = await adminRepository.findById(adminId);
 
     if (!admin || !admin.isActive) {
       throw new UnauthorizedError('Account not found or inactive');
     }
 
+    const updateData: Partial<AdminAttributes> = {};
+
     if (input.firstName) {
       const trimmedName = input.firstName.trim();
       if (trimmedName && trimmedName !== admin.firstName) {
-        admin.firstName = trimmedName;
+        updateData.firstName = trimmedName;
       }
     }
 
     if (input.lastName) {
       const trimmedName = input.lastName.trim();
       if (trimmedName && trimmedName !== admin.lastName) {
-        admin.lastName = trimmedName;
+        updateData.lastName = trimmedName;
       }
     }
 
     if (input.phoneNumber) {
       const trimmedPhone = input.phoneNumber.trim();
       if (trimmedPhone && trimmedPhone !== admin.phoneNumber) {
-        // Strictly enforced: +CC [10 Digits]
         const phoneRegex = /^\+\d{2}\s\d{10}$/;
         if (!phoneRegex.test(trimmedPhone)) {
           throw new BadRequestError(
@@ -137,12 +146,11 @@ export class AuthService {
           );
         }
 
-        // Explicit uniqueness check
-        const existing = await Admin.findOne({
+        const existing = await adminRepository.findOne({
           where: {
             phoneNumber: trimmedPhone,
             id: { [Op.ne]: adminId },
-          },
+          } as Record<string, unknown>,
           paranoid: false,
         });
 
@@ -150,26 +158,12 @@ export class AuthService {
           throw new ConflictError('Phone number already in use by another account');
         }
 
-        admin.phoneNumber = trimmedPhone;
+        updateData.phoneNumber = trimmedPhone;
       }
     }
 
-    await admin.save();
+    await adminRepository.update(adminId, updateData);
 
-    return {
-      id: admin.id,
-      firstName: admin.firstName,
-      lastName: admin.lastName,
-      email: admin.email,
-      phoneNumber: admin.phoneNumber,
-      role: admin.role,
-      society: admin.society
-        ? {
-            id: admin.society.id,
-            name: admin.society.name,
-          }
-        : undefined,
-      lastLogin: admin.lastLogin || null,
-    };
+    return this.getProfile(adminId);
   }
 }
