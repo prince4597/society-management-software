@@ -28,6 +28,7 @@ export interface ResidentAttributes {
   familyMembers?: FamilyMember[];
   flatIds?: string[];
   profileImage?: string;
+  coHabitants?: ResidentAttributes[];
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -37,12 +38,11 @@ export interface ResidentAttributes {
 export interface ResidentCreationAttributes extends Optional<
   ResidentAttributes,
   'id' | 'familyMembers' | 'profileImage'
-> {}
+> { }
 
 class Resident
   extends Model<ResidentAttributes, ResidentCreationAttributes>
-  implements ResidentAttributes
-{
+  implements ResidentAttributes {
   declare id: string;
   declare societyId: string;
   declare firstName: string;

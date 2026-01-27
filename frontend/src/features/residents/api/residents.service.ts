@@ -1,12 +1,12 @@
 import apiClient from '@/infrastructure/api/api-client';
 import { errorService } from '@/infrastructure/services/error-service';
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, PaginatedResult, PaginationParams } from '@/types';
 import type { Resident, CreateResidentInput, UpdateResidentInput } from '../types';
 
 export const residentsService = {
-  async getResidents(): Promise<Resident[]> {
+  async getResidents(params?: PaginationParams): Promise<PaginatedResult<Resident>> {
     try {
-      const response = await apiClient.get<ApiResponse<Resident[]>>('/residents');
+      const response = await apiClient.get<ApiResponse<PaginatedResult<Resident>>>('/residents', { params });
       return response.data.data;
     } catch (error) {
       errorService.handleError(error, 'error');

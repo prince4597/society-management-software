@@ -1,11 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Phone, Mail, Home, AlertCircle, TrendingUp, Wallet, CheckCircle2 } from 'lucide-react';
+import { X, User, Phone, Mail, Home, AlertCircle, TrendingUp, Wallet, CheckCircle2, Loader2 } from 'lucide-react';
 import { Flat, OccupancyStatus, MaintenanceRule, MaintenanceStatus } from '../types';
 import { Resident, ResidentRole } from '../../residents/types';
 import { OwnerBadge, TenantBadge, FamilyBadge } from '../../residents/components/ResidentBadges';
 import { Button, Badge } from '@/components/ui';
+import { propertiesService } from '../api/properties.service';
 import { cn } from '@/lib/utils';
 
 interface FlatMappingDrawerProps {
@@ -17,27 +19,20 @@ interface FlatMappingDrawerProps {
   allResidents?: Resident[];
 }
 
-export const FlatMappingDrawer = ({
-  isOpen,
-  onClose,
-  flat,
-  owner,
-  tenant,
-  allResidents = [],
-}: FlatMappingDrawerProps) => {
+export const FlatMappingDrawer: React.FC<FlatMappingDrawerProps> = ({ isOpen, onClose, flat }) => {
   if (!flat) return null;
 
-  const inhabitants = Array.from(new Map([
-    ...(flat.residents || []),
-    ...allResidents.filter(r => {
-      const allUnitIds = [
-        ...(r.flatIds || []),
-        ...(r.ownedProperties?.map(p => p.id) || []),
-        ...(r.rentedProperties?.map(p => p.id) || [])
-      ];
-      return allUnitIds.includes(flat.id);
-    })
-  ].map(r => [r.id, r])).values()).filter(r => r.id !== owner?.id && r.id !== tenant?.id);
+  const activeFlat = flat;
+
+  // Derive stake holders from the flat's resident list (provided by enriched backend list API)
+  const residents = activeFlat.residents || [];
+  const owner = residents.find(r => r.role === ResidentRole.PRIMARY_OWNER);
+  const tenant = residents.find(r => r.role === ResidentRole.TENANT);
+  const familyMembers = residents.filter(r => r.role === ResidentRole.FAMILY_MEMBER);
+
+  const inhabitants = (activeFlat.residents || []).filter(
+    (r) => r.id !== owner?.id && r.id !== tenant?.id
+  );
 
   const isRented = flat.occupancyStatus === OccupancyStatus.RENTED;
   const isMaintenanceOverdue = flat.maintenanceStatus === MaintenanceStatus.OVERDUE;
@@ -89,8 +84,8 @@ export const FlatMappingDrawer = ({
               </button>
             </div>
 
-            <div className="p-8 space-y-10">
-              {/* Status Section */}
+            <div className="flex-1 p-8 space-y-10 relative">
+              {/* Contextual Asset Header */}
               <section className="bg-secondary/10 p-6 rounded-xl border border-border/60 space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
@@ -178,7 +173,7 @@ export const FlatMappingDrawer = ({
                 </section>
 
                 {/* Tenant Node (Conditional) */}
-                {isRented && (
+                {(isRented || !!tenant) && (
                   <section className="relative pl-12 space-y-4">
                     <div className="absolute left-5 top-4 w-4 h-px bg-border" />
                     <div className="flex items-center justify-between">

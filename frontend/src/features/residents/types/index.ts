@@ -30,6 +30,7 @@ interface PropertyReference {
     number: string;
     floor: number;
     block: string;
+    unitType: string;
 }
 
 export interface Resident {
@@ -45,6 +46,7 @@ export interface Resident {
     profileImage?: string;
     ownedProperties?: PropertyReference[];
     rentedProperties?: PropertyReference[];
+    coHabitants?: Resident[];
 }
 
 export type CreateResidentInput = Omit<Resident, 'id' | 'ownedProperties' | 'rentedProperties'>;

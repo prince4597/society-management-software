@@ -14,7 +14,15 @@ class ResidentController extends BaseController {
 
   findAll = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const societyId = req.user!.societyId!;
-    const residents = await residentService.findAllInSociety(societyId);
+    const { page, limit, sortBy, sortOrder } = req.query;
+
+    const residents = await residentService.findAllPaginatedInSociety(societyId, {
+      page: page ? parseInt(page as string) : undefined,
+      limit: limit ? parseInt(limit as string) : undefined,
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'ASC' | 'DESC',
+    });
+
     return this.success(req, res, residents);
   });
 

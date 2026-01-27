@@ -1,12 +1,12 @@
 import apiClient from '@/infrastructure/api/api-client';
 import { errorService } from '@/infrastructure/services/error-service';
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, PaginatedResult, PaginationParams } from '@/types';
 import type { Flat, CreateFlatInput, UpdateFlatInput } from '../types';
 
 export const propertiesService = {
-  async getProperties(): Promise<Flat[]> {
+  async getProperties(params?: PaginationParams): Promise<PaginatedResult<Flat>> {
     try {
-      const response = await apiClient.get<ApiResponse<Flat[]>>('/properties');
+      const response = await apiClient.get<ApiResponse<PaginatedResult<Flat>>>('/properties', { params });
       return response.data.data;
     } catch (error) {
       errorService.handleError(error, 'error');

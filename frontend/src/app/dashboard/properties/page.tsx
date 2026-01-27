@@ -7,7 +7,7 @@ import { FlatMappingDrawer } from '@/features/properties/components/FlatMappingD
 import { AddUnitModal } from '@/features/properties/components/AddUnitModal';
 // import { MOCK_FLATS, MOCK_RESIDENTS } from '@/features/properties/data/mockData';
 import { Flat } from '@/features/properties/types';
-import { Resident } from '@/features/residents/types';
+import { Resident, ResidentRole } from '@/features/residents/types';
 import { propertyApi } from '@/features/properties/api';
 import { residentApi } from '@/features/residents/api';
 import { Plus, Building2, Search, Filter, LayoutGrid, Layers, Loader2 } from 'lucide-react';
@@ -76,9 +76,17 @@ export default function PropertiesPage() {
     [groupedFlats]
   );
 
-  const getOwner = (ownerId: string) => residents.find((r) => r.id === ownerId);
-  const getTenant = (tenantId?: string) =>
-    tenantId ? residents.find((r) => r.id === tenantId) : undefined;
+  const getOwner = (flat: Flat) => {
+    if (flat.ownerId) return residents.find((r) => r.id === flat.ownerId);
+    const linkedOwner = flat.residents?.find((r) => r.role === ResidentRole.PRIMARY_OWNER);
+    return linkedOwner ? residents.find((r) => r.id === linkedOwner.id) : undefined;
+  };
+
+  const getTenant = (flat: Flat) => {
+    if (flat.tenantId) return residents.find((r) => r.id === flat.tenantId);
+    const linkedTenant = flat.residents?.find((r) => r.role === ResidentRole.TENANT);
+    return linkedTenant ? residents.find((r) => r.id === linkedTenant.id) : undefined;
+  };
 
   const handleFlatClick = (flat: Flat) => {
     setSelectedFlat(flat);
@@ -252,8 +260,8 @@ export default function PropertiesPage() {
                       <FlatCard
                         key={flat.id}
                         flat={flat}
-                        owner={getOwner(flat.ownerId)}
-                        tenant={getTenant(flat.tenantId)}
+                        owner={getOwner(flat)}
+                        tenant={getTenant(flat)}
                         onClick={() => handleFlatClick(flat)}
                       />
                     ))}
@@ -270,8 +278,8 @@ export default function PropertiesPage() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         flat={selectedFlat}
-        owner={selectedFlat ? getOwner(selectedFlat.ownerId) : undefined}
-        tenant={selectedFlat ? getTenant(selectedFlat.tenantId) : undefined}
+        owner={selectedFlat ? getOwner(selectedFlat) : undefined}
+        tenant={selectedFlat ? getTenant(selectedFlat) : undefined}
         allResidents={residents}
       />
 

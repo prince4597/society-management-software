@@ -1,12 +1,15 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Phone, Mail, Home, Users, Calendar, Shield, Database, ShieldCheck } from 'lucide-react';
+import { X, User, Phone, Mail, Home, Users, Calendar, Shield, Database, ShieldCheck, Loader2 } from 'lucide-react';
 import { Resident, ResidentRole } from '../types';
 import { Flat } from '../../properties/types';
 import { OwnerBadge, TenantBadge, FamilyBadge } from './ResidentBadges';
 import { FamilyMemberList } from './FamilyMemberList';
 import { Button, Badge } from '@/components/ui';
+import { residentsService } from '../api/residents.service';
+import { cn } from '@/lib/utils';
 
 interface ResidentProfileDrawerProps {
   isOpen: boolean;
@@ -16,41 +19,21 @@ interface ResidentProfileDrawerProps {
   allResidents?: Resident[];
 }
 
-export const ResidentProfileDrawer = ({
-  isOpen,
-  onClose,
-  resident,
-  flats,
-  allResidents = [],
-}: ResidentProfileDrawerProps) => {
+export const ResidentProfileDrawer: React.FC<ResidentProfileDrawerProps> = ({ isOpen, onClose, resident }) => {
   if (!resident) return null;
 
-  const linkedFlatIds = Array.from(new Set([
-    ...(resident.flatIds || []),
-    ...(resident.ownedProperties?.map(p => p.id) || []),
-    ...(resident.rentedProperties?.map(p => p.id) || [])
-  ]));
+  const activeResident = resident;
 
-  const linkedFlats = flats.filter(f => linkedFlatIds.includes(f.id));
+  const linkedFlats = [
+    ...(activeResident.ownedProperties || []),
+    ...(activeResident.rentedProperties || [])
+  ];
 
-  // Discover other residents in same units using robust link checking
-  const coHabitants = allResidents.filter(r => {
-    if (r.id === resident.id) return false;
-
-    // Extract all unit IDs for this other resident
-    const otherResidentUnitIds = [
-      ...(r.flatIds || []),
-      ...(r.ownedProperties?.map(p => p.id) || []),
-      ...(r.rentedProperties?.map(p => p.id) || [])
-    ];
-
-    // Check for any intersection with current resident's linked units
-    return otherResidentUnitIds.some(id => linkedFlatIds.includes(id));
-  });
-
-  const linkedOwners = coHabitants.filter(r => r.role === ResidentRole.PRIMARY_OWNER);
-  const linkedTenants = coHabitants.filter(r => r.role === ResidentRole.TENANT);
-  const householdMembers = coHabitants.filter(r => r.role === ResidentRole.FAMILY_MEMBER);
+  // Discovery-based residents from the full profile (backend now provides these)
+  const coHabitants: Resident[] = activeResident.coHabitants || [];
+  const linkedOwners: Resident[] = coHabitants.filter(r => r.role === ResidentRole.PRIMARY_OWNER);
+  const linkedTenants: Resident[] = coHabitants.filter(r => r.role === ResidentRole.TENANT);
+  const householdMembers: Resident[] = coHabitants.filter(r => r.role === ResidentRole.FAMILY_MEMBER);
 
   return (
     <AnimatePresence>
@@ -70,7 +53,6 @@ export const ResidentProfileDrawer = ({
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed right-0 top-0 bottom-0 z-[210] w-full max-w-lg bg-card border-l border-border shadow-2xl overflow-y-auto custom-scrollbar flex flex-col"
           >
-            {/* Unified Drawer Header */}
             <div className="sticky top-0 z-10 bg-card border-b border-border p-6 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
@@ -93,7 +75,7 @@ export const ResidentProfileDrawer = ({
               </button>
             </div>
 
-            <div className="flex-1 p-8 space-y-10">
+            <div className="flex-1 p-8 space-y-10 relative">
               {/* Profile Contextual Identity */}
               <div className="bg-secondary/10 p-6 rounded-2xl border border-border/60 flex flex-col items-center sm:items-start sm:flex-row gap-6">
                 <div className="w-20 h-20 rounded-2xl bg-foreground text-background shadow-xl flex items-center justify-center relative shrink-0">
@@ -101,20 +83,20 @@ export const ResidentProfileDrawer = ({
                 </div>
                 <div className="text-center sm:text-left pt-2">
                   <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-none mb-3">
-                    {resident.firstName} {resident.lastName}
+                    {activeResident.firstName} {activeResident.lastName}
                   </h2>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
                     <div className="scale-110 origin-left">
-                      {resident.role === ResidentRole.PRIMARY_OWNER && <OwnerBadge />}
-                      {resident.role === ResidentRole.TENANT && <TenantBadge />}
-                      {resident.role === ResidentRole.FAMILY_MEMBER && <FamilyBadge />}
+                      {activeResident.role === ResidentRole.PRIMARY_OWNER && <OwnerBadge />}
+                      {activeResident.role === ResidentRole.TENANT && <TenantBadge />}
+                      {activeResident.role === ResidentRole.FAMILY_MEMBER && <FamilyBadge />}
                     </div>
                     <Badge
-                      variant={resident.isResident ? 'success' : 'warning'}
+                      variant={activeResident.isResident ? 'success' : 'warning'}
                       className="h-6 text-[9px] font-black px-3 rounded-lg flex items-center gap-1.5 uppercase tracking-widest border-0"
                     >
                       <Shield size={10} />
-                      {resident.isResident ? 'In-Premise' : 'Absentee'}
+                      {activeResident.isResident ? 'In-Premise' : 'Absentee'}
                     </Badge>
                   </div>
                 </div>
@@ -132,7 +114,7 @@ export const ResidentProfileDrawer = ({
                     </div>
                     <div>
                       <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest mb-1">Mobile</p>
-                      <p className="text-sm font-bold text-foreground tracking-tight">{resident.phoneNumber}</p>
+                      <p className="text-sm font-bold text-foreground tracking-tight">{activeResident.phoneNumber}</p>
                     </div>
                   </div>
                   <div className="p-4 rounded-xl bg-card border border-border/60 shadow-sm flex items-center gap-4 hover:border-primary/20 transition-colors">
@@ -141,7 +123,7 @@ export const ResidentProfileDrawer = ({
                     </div>
                     <div className="truncate">
                       <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest mb-1">Email</p>
-                      <p className="text-sm font-bold text-foreground truncate tracking-tight">{resident.email}</p>
+                      <p className="text-sm font-bold text-foreground truncate tracking-tight">{activeResident.email}</p>
                     </div>
                   </div>
                 </div>
@@ -187,10 +169,10 @@ export const ResidentProfileDrawer = ({
                   </h3>
 
                   {/* Nested internal list (legacy) */}
-                  {resident.familyMembers && resident.familyMembers.length > 0 && (
+                  {activeResident.familyMembers && activeResident.familyMembers.length > 0 && (
                     <div className="mb-6">
                       <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Registered Household</p>
-                      <FamilyMemberList members={resident.familyMembers} />
+                      <FamilyMemberList members={activeResident.familyMembers} />
                     </div>
                   )}
 
@@ -247,7 +229,7 @@ export const ResidentProfileDrawer = ({
                       </div>
                     )}
 
-                    {!resident.familyMembers?.length && !coHabitants.length && (
+                    {!activeResident.familyMembers?.length && !coHabitants.length && (
                       <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest italic">
                         No registered co-habitants found
                       </p>

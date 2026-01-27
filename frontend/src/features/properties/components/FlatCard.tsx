@@ -15,8 +15,8 @@ interface FlatCardProps {
 
 export const FlatCard = ({ flat, owner, tenant, onClick }: FlatCardProps) => {
   const isRented = flat.occupancyStatus === OccupancyStatus.RENTED;
-  const isOccupied = flat.occupancyStatus !== OccupancyStatus.VACANT;
-  const resident = isRented ? tenant : owner;
+  const resident = isRented ? (tenant || owner) : owner;
+  const isOccupied = !!resident;
 
   return (
     <Card

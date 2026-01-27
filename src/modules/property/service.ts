@@ -1,4 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
+import { PaginatedResult, PaginationParams, ServiceResponse } from '../../types';
 import { NotFoundError, ConflictError } from '../../middleware/errors';
 import { BaseService } from '../../core/base.service';
 import { propertyRepository, PropertyRepository } from './repository';
@@ -36,6 +37,56 @@ class PropertyService extends BaseService<
     return response.data!;
   }
 
+  async findAllPaginatedInSociety(
+    societyId: string,
+    pagination: Partial<PaginationParams>
+  ): Promise<PaginatedResult<PropertyAttributes>> {
+    const response = await this.findAllPaginated({
+      societyId,
+      pagination: {
+        page: pagination.page || 1,
+        limit: pagination.limit || 20,
+        sortBy: pagination.sortBy || 'createdAt',
+        sortOrder: pagination.sortOrder || 'DESC',
+      },
+      include: [
+        {
+          model: residentRepository.getModel(),
+          as: 'owner',
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phoneNumber'],
+        },
+        {
+          model: residentRepository.getModel(),
+          as: 'tenant',
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phoneNumber'],
+        },
+      ],
+    });
+
+    const paginatedResult = response.data!;
+    const allResidents = await residentRepository.findAll({ societyId });
+
+    paginatedResult.data = await this.enrichPropertiesWithResidents(paginatedResult.data, allResidents);
+
+    return paginatedResult;
+  }
+
+  private async enrichPropertiesWithResidents(
+    properties: PropertyAttributes[],
+    allResidents: ResidentAttributes[]
+  ): Promise<PropertyWithResidents[]> {
+    return properties.map((p) => {
+      const propertyWithResidents = p as PropertyWithResidents;
+      propertyWithResidents.residents = allResidents.filter(
+        (r) =>
+          (r.flatIds || []).includes(p.id) ||
+          r.id === p.ownerId ||
+          r.id === p.tenantId
+      );
+      return propertyWithResidents;
+    });
+  }
+
   async findAllInSociety(societyId: string): Promise<PropertyAttributes[]> {
     const response = await this.findAll({
       societyId,
@@ -51,22 +102,12 @@ class PropertyService extends BaseService<
           attributes: ['id', 'firstName', 'lastName', 'email', 'phoneNumber'],
         },
       ],
-      where: { societyId } as Record<string, unknown>,
     });
 
     const properties = response.data!;
-    const residents = await residentRepository.findAll({ societyId });
+    const allResidents = await residentRepository.findAll({ societyId });
 
-    return properties.map((p) => {
-      const propertyWithResidents = p as PropertyWithResidents;
-      propertyWithResidents.residents = residents.filter(
-        (r) =>
-          (r.flatIds || []).includes(p.id) ||
-          r.id === p.ownerId ||
-          r.id === p.tenantId
-      );
-      return propertyWithResidents;
-    });
+    return this.enrichPropertiesWithResidents(properties, allResidents);
   }
 
   async findByIdInSociety(societyId: string, id: string): Promise<PropertyWithResidents> {

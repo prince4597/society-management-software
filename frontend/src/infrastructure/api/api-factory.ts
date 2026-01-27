@@ -1,7 +1,8 @@
+import { PaginatedResult, PaginationParams } from '@/types';
 import apiClient from './api-client';
 
 export interface BaseApi<T, CreateDTO = Partial<T>, UpdateDTO = Partial<T>> {
-  findAll(): Promise<T[]>;
+  findAll(params?: PaginationParams): Promise<PaginatedResult<T>>;
   findById(id: string): Promise<T>;
   create(data: CreateDTO): Promise<T>;
   update(id: string, data: UpdateDTO): Promise<T>;
@@ -16,8 +17,8 @@ export const createApiService = <T, CreateDTO = Partial<T>, UpdateDTO = Partial<
   resourcePath: string
 ): BaseApi<T, CreateDTO, UpdateDTO> => {
   return {
-    findAll: async (): Promise<T[]> => {
-      const response = await apiClient.get(resourcePath);
+    findAll: async (params?: PaginationParams): Promise<PaginatedResult<T>> => {
+      const response = await apiClient.get(resourcePath, { params });
       return response.data.data;
     },
     findById: async (id: string): Promise<T> => {

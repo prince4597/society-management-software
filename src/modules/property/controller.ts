@@ -14,7 +14,15 @@ class PropertyController extends BaseController {
 
   findAll = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const societyId = req.user!.societyId!;
-    const properties = await propertyService.findAllInSociety(societyId);
+    const { page, limit, sortBy, sortOrder } = req.query;
+
+    const properties = await propertyService.findAllPaginatedInSociety(societyId, {
+      page: page ? parseInt(page as string) : undefined,
+      limit: limit ? parseInt(limit as string) : undefined,
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'ASC' | 'DESC',
+    });
+
     return this.success(req, res, properties);
   });
 
