@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, Button, Badge } from '@/components/ui';
 import { ResidentRole } from '../types';
 import { User, Mail, Phone, Home, Briefcase, ChevronRight, ChevronLeft, Check, Search, Building2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { residentApi } from '../api';
 import { propertyApi } from '../../properties/api';
-import { Flat } from '../../properties/types';
+import { Flat, OccupancyStatus } from '../../properties/types';
 import { cn } from '@/lib/utils';
 
 interface RegisterMemberModalProps {
@@ -21,7 +21,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
   const [units, setUnits] = useState<Flat[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
-  
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -30,13 +30,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
     role: ResidentRole.PRIMARY_OWNER,
   });
 
-  useEffect(() => {
-    if (isOpen && step === 2 && units.length === 0) {
-      loadUnits();
-    }
-  }, [isOpen, step]);
-
-  const loadUnits = async () => {
+  const loadUnits = useCallback(async () => {
     try {
       setFetchingUnits(true);
       const data = await propertyApi.findAll();
@@ -46,7 +40,13 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
     } finally {
       setFetchingUnits(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && step === 2 && units.length === 0) {
+      loadUnits();
+    }
+  }, [isOpen, step, units.length, loadUnits]);
 
   const handleNext = () => setStep(2);
   const handleBack = () => setStep(1);
@@ -54,7 +54,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      
+
       // 1. Create the resident
       const newResident = await residentApi.create({
         ...formData,
@@ -65,13 +65,21 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
       // 2. Link selected units (only for Primary roles)
       const isPrimaryRole = formData.role === ResidentRole.PRIMARY_OWNER || formData.role === ResidentRole.TENANT;
       if (selectedUnitIds.length > 0 && isPrimaryRole) {
+        const updateData: Partial<Flat> = {
+          occupancyStatus: formData.role === ResidentRole.TENANT
+            ? OccupancyStatus.RENTED
+            : OccupancyStatus.OWNER_OCCUPIED,
+        };
+
+        // Assign to the correct role field
+        if (formData.role === ResidentRole.TENANT) {
+          updateData.tenantId = newResident.id;
+        } else {
+          updateData.ownerId = newResident.id;
+        }
+
         await Promise.all(
-          selectedUnitIds.map(unitId => 
-            propertyApi.update(unitId, {
-              [formData.role === ResidentRole.TENANT ? 'tenantId' : 'ownerId']: newResident.id,
-              occupancyStatus: formData.role === ResidentRole.TENANT ? 'RENTED' : 'OWNER_OCCUPIED',
-            } as any)
-          )
+          selectedUnitIds.map(unitId => propertyApi.update(unitId, updateData))
         );
       }
 
@@ -97,21 +105,21 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
     onClose();
   };
 
-  const filteredUnits = units.filter(u => 
+  const filteredUnits = units.filter(u =>
     u.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.block.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const toggleUnit = (id: string) => {
-    setSelectedUnitIds(prev => 
+    setSelectedUnitIds(prev =>
       prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
     );
   };
 
   return (
-    <Dialog 
-      isOpen={isOpen} 
-      onClose={handleClose} 
+    <Dialog
+      isOpen={isOpen}
+      onClose={handleClose}
       title={step === 1 ? "Member Profile" : "Unit Allocation"}
       className="max-w-2xl"
     >
@@ -136,7 +144,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
                   <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">First Name</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/30" size={16} />
-                    <input 
+                    <input
                       autoFocus
                       className="w-full bg-secondary/20 border border-border/40 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold transition-all"
                       value={formData.firstName}
@@ -149,7 +157,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
                   <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Last Name</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/30" size={16} />
-                    <input 
+                    <input
                       className="w-full bg-secondary/20 border border-border/40 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold transition-all"
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
@@ -163,7 +171,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/30" size={16} />
-                  <input 
+                  <input
                     type="email"
                     className="w-full bg-secondary/20 border border-border/40 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold transition-all"
                     value={formData.email}
@@ -178,7 +186,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
                   <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Mobile Hotline</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/30" size={16} />
-                    <input 
+                    <input
                       className="w-full bg-secondary/20 border border-border/40 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold transition-all"
                       value={formData.phoneNumber}
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
@@ -190,7 +198,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
                   <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Community Role</label>
                   <div className="relative">
                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/30" size={16} />
-                    <select 
+                    <select
                       id="role-select"
                       aria-label="Community Role"
                       className="w-full bg-secondary/20 border border-border/40 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold appearance-none cursor-pointer"
@@ -206,7 +214,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
               </div>
 
               <div className="pt-4">
-                <Button 
+                <Button
                   onClick={handleNext}
                   disabled={!formData.firstName || !formData.email}
                   className="w-full rounded-2xl h-14 font-black uppercase tracking-[0.2em] text-[10px] gap-2 shadow-xl shadow-primary/20"
@@ -225,7 +233,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
             >
               <div className="bg-secondary/10 p-4 rounded-2xl border border-border/40 flex items-center gap-4">
                 <Search className="text-muted-foreground" size={18} />
-                <input 
+                <input
                   autoFocus
                   placeholder="Search by Unit # or Block..."
                   className="bg-transparent border-none outline-none text-sm font-bold flex-1"
@@ -245,7 +253,7 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
                   filteredUnits.map(unit => {
                     const isAlreadyOwned = !!unit.ownerId;
                     const isDisabled = formData.role === ResidentRole.PRIMARY_OWNER && isAlreadyOwned;
-                    
+
                     return (
                       <button
                         key={unit.id}
@@ -260,13 +268,13 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
                               : "bg-card border-border/40 hover:border-primary/40"
                         )}
                       >
-                        <Home size={20} className={cn("mb-2", 
-                          selectedUnitIds.includes(unit.id) ? "text-primary" : 
-                          isDisabled ? "text-muted-foreground/20" : "text-muted-foreground/40"
+                        <Home size={20} className={cn("mb-2",
+                          selectedUnitIds.includes(unit.id) ? "text-primary" :
+                            isDisabled ? "text-muted-foreground/20" : "text-muted-foreground/40"
                         )} />
                         <span className="text-[10px] font-black uppercase tracking-widest">Unit {unit.number}</span>
                         <span className="text-[8px] font-bold text-muted-foreground/60 uppercase">Block {unit.block} • L{unit.floor}</span>
-                        
+
                         {selectedUnitIds.includes(unit.id) && (
                           <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
                             <Check size={10} className="text-white" />
@@ -292,14 +300,14 @@ export const RegisterMemberModal = ({ isOpen, onClose, onSuccess }: RegisterMemb
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-4">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleBack}
                   className="rounded-2xl h-14 font-black uppercase tracking-[0.2em] text-[10px] gap-2"
                 >
                   <ChevronLeft size={16} /> Back
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   isLoading={loading}
                   disabled={selectedUnitIds.length === 0}

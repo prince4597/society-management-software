@@ -2,15 +2,16 @@ import { IService, IRepository, ServiceResponse, FindOptions, PaginatedResult } 
 import { NotFoundError } from '../middleware/errors';
 import { logger } from '../utils/logger';
 
-export abstract class BaseService<T, CreateDTO, UpdateDTO> implements IService<
+export abstract class BaseService<
   T,
   CreateDTO,
-  UpdateDTO
-> {
-  protected readonly repository: IRepository<T, CreateDTO, UpdateDTO>;
+  UpdateDTO,
+  ID = string | number,
+> implements IService<T, CreateDTO, UpdateDTO, ID> {
+  protected readonly repository: IRepository<T, CreateDTO, UpdateDTO, ID>;
   protected readonly entityName: string;
 
-  constructor(repository: IRepository<T, CreateDTO, UpdateDTO>, entityName: string) {
+  constructor(repository: IRepository<T, CreateDTO, UpdateDTO, ID>, entityName: string) {
     this.repository = repository;
     this.entityName = entityName;
   }
@@ -23,10 +24,10 @@ export abstract class BaseService<T, CreateDTO, UpdateDTO> implements IService<
     return { success: false, message, code };
   }
 
-  async findById(id: number): Promise<ServiceResponse<T>> {
+  async findById(id: ID): Promise<ServiceResponse<T>> {
     const entity = await this.repository.findById(id);
     if (!entity) {
-      throw new NotFoundError(this.entityName, id);
+      throw new NotFoundError(this.entityName, id as unknown as string | number);
     }
     return this.success(entity);
   }
@@ -47,21 +48,21 @@ export abstract class BaseService<T, CreateDTO, UpdateDTO> implements IService<
     return this.success(entity, `${this.entityName} created successfully`);
   }
 
-  async update(id: number, data: UpdateDTO): Promise<ServiceResponse<T>> {
+  async update(id: ID, data: UpdateDTO): Promise<ServiceResponse<T>> {
     const entity = await this.repository.update(id, data);
     if (!entity) {
-      throw new NotFoundError(this.entityName, id);
+      throw new NotFoundError(this.entityName, id as unknown as string | number);
     }
-    logger.info(`${this.entityName} ${id} updated successfully`);
+    logger.info(`${this.entityName} ${id as unknown as string} updated successfully`);
     return this.success(entity, `${this.entityName} updated successfully`);
   }
 
-  async delete(id: number): Promise<ServiceResponse<boolean>> {
+  async delete(id: ID): Promise<ServiceResponse<boolean>> {
     const deleted = await this.repository.delete(id);
     if (!deleted) {
-      throw new NotFoundError(this.entityName, id);
+      throw new NotFoundError(this.entityName, id as unknown as string | number);
     }
-    logger.info(`${this.entityName} ${id} deleted successfully`);
+    logger.info(`${this.entityName} ${id as unknown as string} deleted successfully`);
     return this.success(true, `${this.entityName} deleted successfully`);
   }
 }

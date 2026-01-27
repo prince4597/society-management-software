@@ -1,21 +1,48 @@
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import { Property, Resident } from '../../models';
 import { logger } from '../../utils/logger';
 import { NotFoundError, ConflictError } from '../../middleware/errors';
+import { BaseService } from '../../core/base.service';
+import { propertyRepository, PropertyRepository } from './repository';
 import type { CreatePropertyInput, UpdatePropertyInput } from './dto';
+import type { PropertyAttributes } from '../../models/property.model';
+import type { ResidentAttributes } from '../../models/resident.model';
 
-class PropertyService {
-  async create(societyId: string, input: CreatePropertyInput): Promise<Property> {
-    const property = await Property.create({
+/**
+ * Extended Property type that includes linked residents
+ * Used for API responses that need resident data
+ */
+interface PropertyWithResidents extends PropertyAttributes {
+  residents: ResidentAttributes[];
+}
+
+class PropertyService extends BaseService<
+  PropertyAttributes,
+  CreatePropertyInput,
+  UpdatePropertyInput,
+  string
+> {
+  protected override readonly repository: PropertyRepository;
+
+  constructor() {
+    super(propertyRepository, 'Property');
+    this.repository = propertyRepository;
+  }
+
+  async createInSociety(
+    societyId: string,
+    input: CreatePropertyInput
+  ): Promise<PropertyAttributes> {
+    const property = await this.repository.create({
       ...input,
       societyId,
-    });
+    } as CreatePropertyInput & { societyId: string });
 
     logger.info(`Property ${property.id} created for society ${societyId}`);
     return property;
   }
 
-  async findAll(societyId: string): Promise<Property[]> {
+  async findAllInSociety(societyId: string): Promise<PropertyAttributes[]> {
     const properties = await Property.findAll({
       where: { societyId },
       include: [
@@ -40,19 +67,22 @@ class PropertyService {
     // Fetch all residents for this society to map them in memory (N+1 avoidance)
     const residents = await Resident.findAll({ where: { societyId } });
 
-    return properties.map(property => {
-      const p = property;
+    return properties.map((property) => {
+      const p = property.toJSON();
       // Discovery inhabitants who have this flat ID in their flatIds JSONB array
-      p.residents = residents.filter(r =>
-        (r.flatIds || []).includes(property.id) ||
-        r.id === property.ownerId ||
-        r.id === property.tenantId
-      );
+      p.residents = residents
+        .filter(
+          (r) =>
+            (r.flatIds || []).includes(property.id) ||
+            r.id === property.ownerId ||
+            r.id === property.tenantId
+        )
+        .map((r) => r.toJSON());
       return p;
     });
   }
 
-  async findById(societyId: string, id: string): Promise<Property> {
+  async findByIdInSociety(societyId: string, id: string): Promise<PropertyWithResidents> {
     const property = await Property.findOne({
       where: { id, societyId },
       include: [
@@ -74,47 +104,53 @@ class PropertyService {
     }
 
     // Find all residents who live here (Owners, Tenants, or Family linked via flatIds)
-    const linkedResidents = await Resident.findAll({
-      where: {
-        societyId,
-        [Op.or]: [
-          { id: property.ownerId || '00000000-0000-0000-0000-000000000000' },
-          { id: property.tenantId || '00000000-0000-0000-0000-000000000000' },
-          {
-            flatIds: {
-              [Op.contains]: [id]
-            }
-          }
-        ]
-      } as any
-    });
+    const whereClause: WhereOptions = {
+      societyId,
+      [Op.or]: [
+        { id: property.ownerId || '00000000-0000-0000-0000-000000000000' },
+        { id: property.tenantId || '00000000-0000-0000-0000-000000000000' },
+        {
+          flatIds: {
+            [Op.contains]: [id],
+          },
+        },
+      ],
+    };
 
-    const propertyData = property.get({ plain: true });
-    propertyData.residents = linkedResidents;
-    return propertyData as any;
+    const linkedResidents = await Resident.findAll({ where: whereClause });
+
+    // Create typed response object
+    const propertyData = property.toJSON();
+    return {
+      ...propertyData,
+      residents: linkedResidents.map((r) => r.toJSON()),
+    } as PropertyWithResidents;
   }
 
-  async update(societyId: string, id: string, data: UpdatePropertyInput): Promise<Property> {
-    const property = await Property.findOne({ where: { id, societyId } });
-    if (!property) throw new NotFoundError('Property', id);
+  async updateInSociety(
+    societyId: string,
+    id: string,
+    data: UpdatePropertyInput
+  ): Promise<PropertyAttributes> {
+    const propertyModel = await Property.findOne({ where: { id, societyId } });
+    if (!propertyModel) throw new NotFoundError('Property', id);
 
     // Enforce "One Unit, One Owner" rule
-    if (data.ownerId && property.ownerId && data.ownerId !== property.ownerId) {
+    if (data.ownerId && propertyModel.ownerId && data.ownerId !== propertyModel.ownerId) {
       throw new ConflictError(
-        `Property ${property.number} already has an owner assigned. Each unit can have only one owner.`
+        `Property ${propertyModel.number} already has an owner assigned. Each unit can have only one owner.`
       );
     }
 
-    await property.update(data);
+    const updated = await propertyModel.update(data);
     logger.info(`Property ${id} updated`);
-    return property;
+    return updated.toJSON();
   }
 
-  async delete(societyId: string, id: string): Promise<void> {
-    const property = await Property.findOne({ where: { id, societyId } });
-    if (!property) throw new NotFoundError('Property', id);
-    await property.destroy();
-    logger.info(`Property ${id} deleted`);
+  async deleteFromSociety(societyId: string, id: string): Promise<void> {
+    const affected = await Property.destroy({ where: { id, societyId } });
+    if (affected === 0) throw new NotFoundError('Property', id);
+    logger.info(`Property ${id} deleted from society ${societyId}`);
   }
 }
 

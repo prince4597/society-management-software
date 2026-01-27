@@ -67,24 +67,24 @@ export interface FindOptions<T = unknown> {
   include?: string[];
 }
 
-export interface IRepository<T, CreateDTO, UpdateDTO> {
-  findById(id: number): Promise<T | null>;
+export interface IRepository<T, CreateDTO, UpdateDTO, ID = string | number> {
+  findById(id: ID): Promise<T | null>;
   findOne(options: FindOptions<T>): Promise<T | null>;
   findAll(options?: FindOptions<T>): Promise<T[]>;
   findAllPaginated(options: FindOptions<T>): Promise<PaginatedResult<T>>;
   create(data: CreateDTO): Promise<T>;
-  update(id: number, data: UpdateDTO): Promise<T | null>;
-  delete(id: number): Promise<boolean>;
+  update(id: ID, data: UpdateDTO): Promise<T | null>;
+  delete(id: ID): Promise<boolean>;
   count(where?: Partial<T>): Promise<number>;
 }
 
-export interface IService<T, CreateDTO, UpdateDTO> {
-  findById(id: number): Promise<ServiceResponse<T>>;
+export interface IService<T, CreateDTO, UpdateDTO, ID = string | number> {
+  findById(id: ID): Promise<ServiceResponse<T>>;
   findAll(options?: FindOptions<T>): Promise<ServiceResponse<T[]>>;
   findAllPaginated(options: FindOptions<T>): Promise<ServiceResponse<PaginatedResult<T>>>;
   create(data: CreateDTO): Promise<ServiceResponse<T>>;
-  update(id: number, data: UpdateDTO): Promise<ServiceResponse<T>>;
-  delete(id: number): Promise<ServiceResponse<boolean>>;
+  update(id: ID, data: UpdateDTO): Promise<ServiceResponse<T>>;
+  delete(id: ID): Promise<ServiceResponse<boolean>>;
 }
 
 export interface RequestContext {

@@ -12,21 +12,21 @@ class SocietyController extends BaseController {
   });
 
   findAll = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
-    const societies = await societyService.findAll();
-    return this.success(req, res, societies);
+    const response = await societyService.findAll();
+    return this.success(req, res, response.data);
   });
 
   findById = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const id = req.params['id'] as string;
-    const society = await societyService.findById(id);
+    const society = await societyService.getSocietyDetails(id);
     return this.success(req, res, society);
   });
 
   update = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const id = req.params['id'] as string;
     const data = req.body as UpdateSocietyInput;
-    const society = await societyService.update(id, data);
-    return this.success(req, res, society, 'Society updated successfully');
+    const response = await societyService.update(id, data);
+    return this.success(req, res, response.data, 'Society updated successfully');
   });
 
   getAdmins = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
@@ -42,7 +42,7 @@ class SocietyController extends BaseController {
         .status(403)
         .json({ success: false, message: 'No society associated with this account' });
     }
-    const society = await societyService.findById(societyId);
+    const society = await societyService.getSocietyDetails(societyId);
     return this.success(req, res, society);
   });
 
@@ -54,8 +54,8 @@ class SocietyController extends BaseController {
         .json({ success: false, message: 'No society associated with this account' });
     }
     const data = req.body as UpdateSocietyInput;
-    const society = await societyService.update(societyId, data);
-    return this.success(req, res, society, 'Society profile updated successfully');
+    const response = await societyService.update(societyId, data);
+    return this.success(req, res, response.data, 'Society profile updated successfully');
   });
 }
 

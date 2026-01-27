@@ -8,36 +8,31 @@ import { residentApi } from '@/features/residents/api';
 import { propertyApi } from '@/features/properties/api';
 import { ResidentProfileDrawer } from '@/features/residents/components/ResidentProfileDrawer';
 import { RegisterMemberModal } from '@/features/residents/components/RegisterMemberModal';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Mail, 
-  Phone, 
+import {
+  Users,
+  Search,
+  Filter,
   MapPin,
-  ExternalLink,
   UserPlus,
   ArrowRight,
-  TrendingUp,
   ShieldCheck,
   Building,
   Home,
   Loader2
 } from 'lucide-react';
-import { 
-  Button, 
-  Badge, 
-  Table, 
-  TableHeader, 
-  TableBody, 
-  TableHead, 
-  TableRow, 
-  TableCell 
+import {
+  Button,
+  Badge,
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell
 } from '@/components/ui';
 import { OwnerBadge, TenantBadge, FamilyBadge } from '@/features/residents/components/ResidentBadges';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function ResidentsPage() {
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -80,7 +75,7 @@ export default function ResidentsPage() {
     return uniqueIds.map(id => flats.find(f => f.id === id)?.number).filter(Boolean).join(', ');
   }
 
-  const filteredResidents = residents.filter(r => 
+  const filteredResidents = residents.filter(r =>
     `${r.firstName} ${r.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     getFlatNumbers(r).includes(searchQuery)
@@ -127,8 +122,8 @@ export default function ResidentsPage() {
               High-fidelity ledger of all verified homeowners, tenants, and community stakeholders.
             </p>
           </div>
-          
-          <Button 
+
+          <Button
             onClick={() => setIsAddModalOpen(true)}
             className="rounded-[1.5rem] font-black gap-3 shadow-xl shadow-primary/20 h-16 px-10 text-[10px] uppercase tracking-[0.2em] bg-primary hover:scale-[1.02] active:scale-95 transition-all"
           >
@@ -146,11 +141,11 @@ export default function ResidentsPage() {
           { label: 'Lease Holders', value: residents.filter(r => r.role === ResidentRole.TENANT).length, icon: Users, color: 'text-info', bg: 'bg-info/5' },
           { label: 'Absentee', value: residents.filter(r => !r.isResident).length, icon: MapPin, color: 'text-warning', bg: 'bg-warning/5' },
         ].map((stat, i) => (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            key={i} 
+            key={i}
             className="bg-card border border-border/60 p-6 rounded-2xl flex flex-col gap-4 shadow-sm hover:border-primary/20 transition-all group"
           >
             <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-transform group-hover:scale-110", stat.bg, stat.color, "border-inherit")}>
@@ -159,7 +154,7 @@ export default function ResidentsPage() {
             <div>
               <p className="text-[9px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-1.5">{stat.label}</p>
               <div className="flex items-baseline gap-2">
-                 <p className="text-3xl font-black text-foreground tracking-tighter">{stat.value}</p>
+                <p className="text-3xl font-black text-foreground tracking-tighter">{stat.value}</p>
               </div>
             </div>
           </motion.div>
@@ -170,8 +165,8 @@ export default function ResidentsPage() {
       <div className="flex flex-col md:flex-row gap-4 items-center bg-card border border-border p-4 rounded-[2rem] shadow-sm">
         <div className="relative flex-1 group w-full">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground/40 group-focus-within:text-primary transition-colors" size={20} />
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Search Member Registry..."
             className="w-full bg-secondary/20 border border-transparent focus:border-primary/10 rounded-[1.25rem] py-3.5 pl-14 pr-8 text-sm font-bold text-foreground focus:ring-8 focus:ring-primary/5 transition-all outline-none"
             value={searchQuery}
@@ -179,9 +174,9 @@ export default function ResidentsPage() {
           />
         </div>
         <div className="flex gap-3 w-full md:w-auto">
-            <Button variant="outline" className="flex-1 md:flex-none rounded-2xl font-black gap-3 text-[10px] uppercase tracking-widest h-14 px-8 border-border/60 hover:bg-secondary">
-                <Filter size={18} /> Filters
-            </Button>
+          <Button variant="outline" className="flex-1 md:flex-none rounded-2xl font-black gap-3 text-[10px] uppercase tracking-widest h-14 px-8 border-border/60 hover:bg-secondary">
+            <Filter size={18} /> Filters
+          </Button>
         </div>
       </div>
 
@@ -199,8 +194,8 @@ export default function ResidentsPage() {
           </TableHeader>
           <TableBody>
             {filteredResidents.map((resident) => (
-              <TableRow 
-                key={resident.id} 
+              <TableRow
+                key={resident.id}
                 onClick={() => handleResidentClick(resident)}
                 className="group cursor-pointer transition-all hover:bg-secondary/30 border-b border-border/40 last:border-0"
               >
@@ -230,8 +225,8 @@ export default function ResidentsPage() {
                   </div>
                 </TableCell>
                 <TableCell className="text-center">
-                  <Badge 
-                    variant={resident.isResident ? 'success' : 'warning'} 
+                  <Badge
+                    variant={resident.isResident ? 'success' : 'warning'}
                     className="text-[9px] font-black rounded-lg px-3 py-1 uppercase tracking-widest border-0"
                   >
                     {resident.isResident ? "Verified In" : "Absent"}
@@ -240,7 +235,7 @@ export default function ResidentsPage() {
                 <TableCell className="text-right pr-10">
                   <div className="flex justify-end">
                     <div className="w-12 h-12 rounded-2xl bg-secondary/40 flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-white transition-all shadow-sm border border-border/60 group-hover:border-primary group-hover:scale-110">
-                        <ArrowRight size={20} />
+                      <ArrowRight size={20} />
                     </div>
                   </div>
                 </TableCell>
@@ -250,7 +245,7 @@ export default function ResidentsPage() {
         </Table>
       </div>
 
-      <ResidentProfileDrawer 
+      <ResidentProfileDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         resident={selectedResident}
@@ -258,7 +253,7 @@ export default function ResidentsPage() {
         allResidents={residents}
       />
 
-      <RegisterMemberModal 
+      <RegisterMemberModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={fetchData}

@@ -1,30 +1,46 @@
 import { Resident, Property } from '../../models';
 import { logger } from '../../utils/logger';
-import { NotFoundError, ConflictError } from '../../middleware/errors';
+import { ConflictError, NotFoundError } from '../../middleware/errors';
+import { BaseService } from '../../core/base.service';
+import { residentRepository, ResidentRepository } from './repository';
 import type { CreateResidentInput, UpdateResidentInput } from './dto';
+import type { ResidentAttributes } from '../../models/resident.model';
 
-class ResidentService {
-  async create(societyId: string, input: CreateResidentInput): Promise<Resident> {
-    const existing = await Resident.findOne({
-      where: { email: input.email, societyId },
-    });
+class ResidentService extends BaseService<
+  ResidentAttributes,
+  CreateResidentInput,
+  UpdateResidentInput,
+  string
+> {
+  protected override readonly repository: ResidentRepository;
+
+  constructor() {
+    super(residentRepository, 'Resident');
+    this.repository = residentRepository;
+  }
+
+  async createWithSociety(
+    societyId: string,
+    input: CreateResidentInput
+  ): Promise<ResidentAttributes> {
+    const existing = await this.repository.findByEmail(input.email, societyId);
     if (existing) {
       throw new ConflictError(
         `Resident with email "${input.email}" already exists in this society`
       );
     }
 
-    const resident = await Resident.create({
+    const resident = await this.repository.create({
       ...input,
       societyId,
-    });
+    } as CreateResidentInput & { societyId: string });
 
     logger.info(`Resident ${resident.id} created for society ${societyId}`);
     return resident;
   }
 
-  async findAll(societyId: string): Promise<Resident[]> {
-    return Resident.findAll({
+  async findAllInSociety(societyId: string): Promise<ResidentAttributes[]> {
+    const residents = await Resident.findAll({
       where: { societyId },
       include: [
         { model: Property, as: 'ownedProperties', attributes: ['id', 'number', 'block', 'floor'] },
@@ -35,9 +51,10 @@ class ResidentService {
         ['lastName', 'ASC'],
       ],
     });
+    return residents.map((r) => r.toJSON());
   }
 
-  async findById(societyId: string, id: string): Promise<Resident> {
+  async findByIdInSociety(societyId: string, id: string): Promise<ResidentAttributes> {
     const resident = await Resident.findOne({
       where: { id, societyId },
       include: [
@@ -50,20 +67,13 @@ class ResidentService {
       throw new NotFoundError('Resident', id);
     }
 
-    return resident;
+    return resident.toJSON();
   }
 
-  async update(societyId: string, id: string, data: UpdateResidentInput): Promise<Resident> {
-    const resident = await this.findById(societyId, id);
-    await resident.update(data);
-    logger.info(`Resident ${id} updated`);
-    return resident;
-  }
-
-  async delete(societyId: string, id: string): Promise<void> {
-    const resident = await this.findById(societyId, id);
-    await resident.destroy();
-    logger.info(`Resident ${id} deleted`);
+  async deleteFromSociety(societyId: string, id: string): Promise<void> {
+    const affected = await Resident.destroy({ where: { id, societyId } });
+    if (affected === 0) throw new NotFoundError('Resident', id);
+    logger.info(`Resident ${id} deleted from society ${societyId}`);
   }
 }
 

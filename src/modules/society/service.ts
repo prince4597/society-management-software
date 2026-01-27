@@ -4,6 +4,8 @@ import { Society, Admin } from '../../models';
 import { logger } from '../../utils/logger';
 import { ConflictError, NotFoundError, BadRequestError } from '../../middleware/errors';
 import { RoleName } from '../../constants/roles';
+import { BaseService } from '../../core/base.service';
+import { societyRepository, SocietyRepository } from './repository';
 import type { CreateSocietyInput, UpdateSocietyInput } from './dto';
 import type { SocietyAttributes } from '../../models/society.model';
 
@@ -29,14 +31,23 @@ export interface SocietyDetailResult extends SocietyAttributes {
   }>;
 }
 
-class SocietyService {
+class SocietyService extends BaseService<
+  SocietyAttributes,
+  CreateSocietyInput['society'],
+  UpdateSocietyInput,
+  string
+> {
+  protected override readonly repository: SocietyRepository;
+
+  constructor() {
+    super(societyRepository, 'Society');
+    this.repository = societyRepository;
+  }
+
   async onboardSociety(input: CreateSocietyInput): Promise<OnboardResult> {
     const { society: societyData, admin: adminData } = input;
 
-    const existingCode = await Society.findOne({
-      where: { code: societyData.code },
-      paranoid: false,
-    });
+    const existingCode = await this.repository.findByCode(societyData.code);
     if (existingCode) {
       throw new ConflictError(`Society with code "${societyData.code}" already exists`);
     }
@@ -119,14 +130,7 @@ class SocietyService {
     }
   }
 
-  async findAll(): Promise<SocietyAttributes[]> {
-    const societies = await Society.findAll({
-      order: [['createdAt', 'DESC']],
-    });
-    return societies.map((s) => s.toJSON());
-  }
-
-  async findById(id: string): Promise<SocietyDetailResult> {
+  async getSocietyDetails(id: string): Promise<SocietyDetailResult> {
     const society = await Society.findByPk(id, {
       include: [
         {
@@ -170,17 +174,6 @@ class SocietyService {
         role: admin.role,
       })),
     };
-  }
-
-  async update(id: string, data: UpdateSocietyInput): Promise<SocietyDetailResult> {
-    const society = await Society.findByPk(id);
-    if (!society) {
-      throw new NotFoundError('Society', id);
-    }
-
-    await society.update(data);
-    logger.info(`Society ${id} updated`);
-    return this.findById(id);
   }
 
   async getAdmins(societyId: string): Promise<Admin[]> {

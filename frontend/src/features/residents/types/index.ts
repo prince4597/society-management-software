@@ -21,6 +21,17 @@ export interface FamilyMember {
     email?: string;
 }
 
+/**
+ * Property reference for resident associations
+ * Minimal type to avoid circular dependencies with properties feature
+ */
+interface PropertyReference {
+    id: string;
+    number: string;
+    floor: number;
+    block: string;
+}
+
 export interface Resident {
     id: string;
     firstName: string;
@@ -32,6 +43,7 @@ export interface Resident {
     isResident: boolean; // True if living in the society, false if non-resident owner
     familyMembers?: FamilyMember[];
     profileImage?: string;
-    ownedProperties?: any[];
-    rentedProperties?: any[];
+    ownedProperties?: PropertyReference[];
+    rentedProperties?: PropertyReference[];
 }
+

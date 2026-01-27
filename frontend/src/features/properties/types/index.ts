@@ -22,6 +22,19 @@ export enum UnitType {
     PENTHOUSE = 'Penthouse',
 }
 
+/**
+ * Resident reference for property associations
+ * Minimal type to avoid circular dependencies with residents feature
+ */
+interface ResidentReference {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    role: 'PRIMARY_OWNER' | 'TENANT' | 'FAMILY_MEMBER';
+}
+
 export interface Flat {
     id: string;
     number: string;
@@ -34,5 +47,6 @@ export interface Flat {
     ownerId: string;
     tenantId?: string;
     squareFeet?: number;
-    residents?: any[];
+    residents?: ResidentReference[];
 }
+

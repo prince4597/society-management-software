@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, Input, Button } from '@/components/ui';
+import { Dialog, Button } from '@/components/ui';
 import { UnitType } from '../types';
 import { Building2, Hash, Layers, Home, Ruler } from 'lucide-react';
 
@@ -15,7 +15,7 @@ interface AddUnitModalProps {
 }
 
 export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) => {
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     block: 'A',
     floor: '',
@@ -27,7 +27,7 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setLoading(true);
+      setIsSubmitting(true);
       await propertyApi.create({
         ...formData,
         floor: parseInt(formData.floor),
@@ -41,7 +41,7 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
     } catch (error) {
       console.error('Failed to register unit:', error);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -53,7 +53,7 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Building Block</label>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-              <input 
+              <input
                 className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold"
                 value={formData.block}
                 onChange={(e) => setFormData({ ...formData, block: e.target.value.toUpperCase() })}
@@ -66,7 +66,7 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking_widest ml-1">Floor Level</label>
             <div className="relative">
               <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-              <input 
+              <input
                 type="number"
                 className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold"
                 value={formData.floor}
@@ -81,7 +81,7 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Unit / Flat Number</label>
           <div className="relative">
             <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-            <input 
+            <input
               className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold"
               value={formData.number}
               onChange={(e) => setFormData({ ...formData, number: e.target.value })}
@@ -95,7 +95,7 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Asset Configuration</label>
             <div className="relative">
               <Home className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-              <select 
+              <select
                 className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold appearance-none cursor-pointer"
                 value={formData.unitType}
                 onChange={(e) => setFormData({ ...formData, unitType: e.target.value as UnitType })}
@@ -110,7 +110,7 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Area (Sq. Ft.)</label>
             <div className="relative">
               <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-              <input 
+              <input
                 type="number"
                 className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold"
                 value={formData.squareFeet}
@@ -122,10 +122,10 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
         </div>
 
         <div className="pt-4 flex gap-3">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px]">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px]">
             Cancel
           </Button>
-          <Button type="submit" className="flex-1 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
+          <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting} className="flex-1 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
             Confirm Entry
           </Button>
         </div>

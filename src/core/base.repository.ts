@@ -21,7 +21,8 @@ export abstract class BaseRepository<
   Attributes,
   CreateDTO,
   UpdateDTO,
-> implements IRepository<Attributes, CreateDTO, UpdateDTO> {
+  ID = string | number,
+> implements IRepository<Attributes, CreateDTO, UpdateDTO, ID> {
   protected readonly model: ModelStatic<T>;
   protected readonly entityName: string;
 
@@ -56,9 +57,9 @@ export abstract class BaseRepository<
     return findOptions;
   }
 
-  async findById(id: number): Promise<Attributes | null> {
+  async findById(id: ID): Promise<Attributes | null> {
     try {
-      const record = await this.model.findByPk(id);
+      const record = await this.model.findByPk(id as unknown as string | number);
       return record ? record.toJSON() : null;
     } catch (error) {
       logger.error(`${this.entityName}.findById failed:`, error);
@@ -111,7 +112,7 @@ export abstract class BaseRepository<
     }
   }
 
-  async update(id: number, data: UpdateDTO): Promise<Attributes | null> {
+  async update(id: ID, data: UpdateDTO): Promise<Attributes | null> {
     try {
       const [affectedCount] = await this.model.update(
         data as unknown as Partial<T['_attributes']>,
@@ -129,7 +130,7 @@ export abstract class BaseRepository<
     }
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: ID): Promise<boolean> {
     try {
       const affectedCount = await this.model.destroy({
         where: { id } as unknown as WhereOptions,
@@ -152,7 +153,7 @@ export abstract class BaseRepository<
     }
   }
 
-  async exists(id: number): Promise<boolean> {
+  async exists(id: ID): Promise<boolean> {
     const count = await this.model.count({
       where: { id } as unknown as WhereOptions,
     });

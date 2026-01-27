@@ -1,11 +1,10 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Building2, User, Phone, Mail, CreditCard, Users, ShieldCheck, Home, AlertCircle, TrendingUp, Wallet, CheckCircle2 } from 'lucide-react';
+import { X, User, Phone, Mail, Home, AlertCircle, TrendingUp, Wallet, CheckCircle2 } from 'lucide-react';
 import { Flat, OccupancyStatus, MaintenanceRule, MaintenanceStatus } from '../types';
 import { Resident, ResidentRole } from '../../residents/types';
 import { OwnerBadge, TenantBadge, FamilyBadge } from '../../residents/components/ResidentBadges';
-import { FamilyMemberList } from '../../residents/components/FamilyMemberList';
 import { Button, Badge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -31,12 +30,12 @@ export const FlatMappingDrawer = ({
   const inhabitants = Array.from(new Map([
     ...(flat.residents || []),
     ...allResidents.filter(r => {
-        const allUnitIds = [
-            ...(r.flatIds || []),
-            ...(r.ownedProperties?.map(p => p.id) || []),
-            ...(r.rentedProperties?.map(p => p.id) || [])
-        ];
-        return allUnitIds.includes(flat.id);
+      const allUnitIds = [
+        ...(r.flatIds || []),
+        ...(r.ownedProperties?.map(p => p.id) || []),
+        ...(r.rentedProperties?.map(p => p.id) || [])
+      ];
+      return allUnitIds.includes(flat.id);
     })
   ].map(r => [r.id, r])).values()).filter(r => r.id !== owner?.id && r.id !== tenant?.id);
 
@@ -72,13 +71,13 @@ export const FlatMappingDrawer = ({
                     Flat {flat.number}
                   </h2>
                   <div className="flex items-center gap-2">
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none">
-                        Allocation Unit
-                      </p>
-                      <span className="w-1 h-1 rounded-full bg-border" />
-                      <p className="text-[10px] text-primary font-bold uppercase tracking-widest leading-none">
-                        {flat.unitType}
-                      </p>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none">
+                      Allocation Unit
+                    </p>
+                    <span className="w-1 h-1 rounded-full bg-border" />
+                    <p className="text-[10px] text-primary font-bold uppercase tracking-widest leading-none">
+                      {flat.unitType}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -97,10 +96,10 @@ export const FlatMappingDrawer = ({
                   <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                     Allocation Status
                   </h3>
-                  <Badge 
+                  <Badge
                     variant={
                       flat.occupancyStatus === OccupancyStatus.OWNER_OCCUPIED ? 'success' :
-                      flat.occupancyStatus === OccupancyStatus.RENTED ? 'info' : 'neutral'
+                        flat.occupancyStatus === OccupancyStatus.RENTED ? 'info' : 'neutral'
                     }
                     className="rounded-md px-2 py-0.5 text-[9px] font-bold"
                   >
@@ -122,15 +121,15 @@ export const FlatMappingDrawer = ({
               {/* Maintenance Alert Card (If Overdue) */}
               {isMaintenanceOverdue && (
                 <div className="p-4 rounded-xl bg-danger/5 border border-danger/20 flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-danger/10 text-danger shrink-0">
-                        <AlertCircle size={18} />
-                    </div>
-                    <div>
-                        <h4 className="text-xs font-bold text-danger uppercase tracking-tight">Maintenance Overdue</h4>
-                        <p className="text-[11px] text-danger/70 font-semibold mt-1 leading-relaxed">
-                            Outstanding dues detected. Automated gate passes restricted until settlement.
-                        </p>
-                    </div>
+                  <div className="p-2 rounded-lg bg-danger/10 text-danger shrink-0">
+                    <AlertCircle size={18} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-danger uppercase tracking-tight">Maintenance Overdue</h4>
+                    <p className="text-[11px] text-danger/70 font-semibold mt-1 leading-relaxed">
+                      Outstanding dues detected. Automated gate passes restricted until settlement.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -151,7 +150,7 @@ export const FlatMappingDrawer = ({
                     <div className="p-5 rounded-xl bg-card border border-border shadow-sm space-y-4 group hover:border-primary/30 transition-all">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center border border-border text-muted-foreground/60">
-                           <User size={24} />
+                          <User size={24} />
                         </div>
                         <div>
                           <p className="text-lg font-bold text-foreground tracking-tight">
@@ -163,12 +162,12 @@ export const FlatMappingDrawer = ({
                         </div>
                       </div>
                       <div className="flex gap-2">
-                         <Button variant="outline" size="sm" className="flex-1 rounded-lg h-9 text-[9px] font-bold uppercase tracking-widest">
-                           <Phone size={14} className="mr-2 opacity-60" /> Connect
-                         </Button>
-                         <Button variant="outline" size="sm" className="flex-1 rounded-lg h-9 text-[9px] font-bold uppercase tracking-widest">
-                           <Mail size={14} className="mr-2 opacity-60" /> Message
-                         </Button>
+                        <Button variant="outline" size="sm" className="flex-1 rounded-lg h-9 text-[9px] font-bold uppercase tracking-widest">
+                          <Phone size={14} className="mr-2 opacity-60" /> Connect
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 rounded-lg h-9 text-[9px] font-bold uppercase tracking-widest">
+                          <Mail size={14} className="mr-2 opacity-60" /> Message
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -192,7 +191,7 @@ export const FlatMappingDrawer = ({
                       <div className="p-5 rounded-xl bg-card border border-border shadow-sm space-y-4 group hover:border-info/30 transition-all">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-lg bg-info/5 flex items-center justify-center border border-info/10 text-info/60">
-                             <User size={24} />
+                            <User size={24} />
                           </div>
                           <div>
                             <p className="text-lg font-bold text-foreground tracking-tight">
@@ -204,12 +203,12 @@ export const FlatMappingDrawer = ({
                           </div>
                         </div>
                         <div className="flex gap-2">
-                           <Button variant="outline" size="sm" className="flex-1 rounded-lg h-9 text-[9px] font-bold uppercase tracking-widest">
-                             <Phone size={14} className="mr-2 opacity-60" /> Connect
-                           </Button>
-                           <Button variant="outline" size="sm" className="flex-1 rounded-lg h-9 text-[9px] font-bold uppercase tracking-widest">
-                             <Mail size={14} className="mr-2 opacity-60" /> Message
-                           </Button>
+                          <Button variant="outline" size="sm" className="flex-1 rounded-lg h-9 text-[9px] font-bold uppercase tracking-widest">
+                            <Phone size={14} className="mr-2 opacity-60" /> Connect
+                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1 rounded-lg h-9 text-[9px] font-bold uppercase tracking-widest">
+                            <Mail size={14} className="mr-2 opacity-60" /> Message
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -219,7 +218,7 @@ export const FlatMappingDrawer = ({
                     )}
                   </section>
                 )}
-                
+
                 {/* Family Members / Inhabitants */}
                 {inhabitants.length > 0 && (
                   <section className="relative pl-12 space-y-4">
@@ -233,24 +232,24 @@ export const FlatMappingDrawer = ({
                       </Badge>
                     </div>
                     <div className="space-y-2">
-                       {inhabitants.map(member => (
-                         <div key={member.id} className="p-3 rounded-xl bg-secondary/20 border border-border/40 flex items-center justify-between group hover:bg-card transition-all">
-                            <div className="flex items-center gap-3">
-                               <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground border border-border/60">
-                                  <User size={16} />
-                               </div>
-                               <div>
-                                  <p className="text-xs font-bold text-foreground tracking-tight">{member.firstName} {member.lastName}</p>
-                                  <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest">{member.role.replace('_', ' ')}</p>
-                               </div>
+                      {inhabitants.map(member => (
+                        <div key={member.id} className="p-3 rounded-xl bg-secondary/20 border border-border/40 flex items-center justify-between group hover:bg-card transition-all">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground border border-border/60">
+                              <User size={16} />
                             </div>
-                            <div className="scale-75 origin-right">
-                              {member.role === ResidentRole.PRIMARY_OWNER && <OwnerBadge />}
-                              {member.role === ResidentRole.TENANT && <TenantBadge />}
-                              {member.role === ResidentRole.FAMILY_MEMBER && <FamilyBadge />}
+                            <div>
+                              <p className="text-xs font-bold text-foreground tracking-tight">{member.firstName} {member.lastName}</p>
+                              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest">{member.role.replace('_', ' ')}</p>
                             </div>
-                         </div>
-                       ))}
+                          </div>
+                          <div className="scale-75 origin-right">
+                            {member.role === ResidentRole.PRIMARY_OWNER && <OwnerBadge />}
+                            {member.role === ResidentRole.TENANT && <TenantBadge />}
+                            {member.role === ResidentRole.FAMILY_MEMBER && <FamilyBadge />}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </section>
                 )}
@@ -259,55 +258,55 @@ export const FlatMappingDrawer = ({
               {/* Financial & Ledger Section */}
               <section className="pt-8 border-t border-border space-y-5">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                  <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                     Financial Oversight
-                    </h3>
-                    <TrendingUp size={16} className="text-primary/30" />
+                  </h3>
+                  <TrendingUp size={16} className="text-primary/30" />
                 </div>
-                
-                <div className="grid grid-cols-1 gap-3">
-                    <div className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center justify-between group">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-lg bg-success/5 flex items-center justify-center text-success border border-success/10 group-hover:bg-success group-hover:text-white transition-all">
-                                <Wallet size={18} />
-                            </div>
-                            <div>
-                                <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mb-1">Payer Rule</p>
-                                <p className="text-sm font-bold text-foreground">
-                                    {flat.maintenanceRule === MaintenanceRule.DEFAULT_OWNER ? 'Settled by Owner' : 'Direct Tenant Payment'}
-                                </p>
-                            </div>
-                        </div>
-                        <Button variant="outline" size="sm" className="rounded-md h-8 px-3 text-[9px] font-bold uppercase tracking-widest">
-                            Config
-                        </Button>
-                    </div>
 
-                    <div className={cn(
-                        "p-4 rounded-xl bg-card border shadow-sm flex items-center justify-between group transition-all",
-                        isMaintenanceOverdue ? "border-danger/30 bg-danger/[0.02]" : "border-border"
-                    )}>
-                        <div className="flex items-center gap-4">
-                            <div className={cn(
-                                "w-10 h-10 rounded-lg flex items-center justify-center border transition-all",
-                                isMaintenanceOverdue ? "bg-danger text-white border-danger" : "bg-success/5 text-success border-success/10"
-                            )}>
-                                {isMaintenanceOverdue ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
-                            </div>
-                            <div>
-                                <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mb-1">Current Ledger</p>
-                                <p className={cn("text-sm font-bold", isMaintenanceOverdue ? "text-danger" : "text-success")}>
-                                    Maintenance {flat.maintenanceStatus}
-                                </p>
-                            </div>
-                        </div>
-                        <Button variant={isMaintenanceOverdue ? 'danger' : 'outline'} size="sm" className={cn(
-                            "rounded-md h-8 px-3 text-[9px] font-bold uppercase tracking-widest",
-                            isMaintenanceOverdue && "shadow-md shadow-danger/10"
-                        )}>
-                            {isMaintenanceOverdue ? 'Collect' : 'Logs'}
-                        </Button>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center justify-between group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-success/5 flex items-center justify-center text-success border border-success/10 group-hover:bg-success group-hover:text-white transition-all">
+                        <Wallet size={18} />
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mb-1">Payer Rule</p>
+                        <p className="text-sm font-bold text-foreground">
+                          {flat.maintenanceRule === MaintenanceRule.DEFAULT_OWNER ? 'Settled by Owner' : 'Direct Tenant Payment'}
+                        </p>
+                      </div>
                     </div>
+                    <Button variant="outline" size="sm" className="rounded-md h-8 px-3 text-[9px] font-bold uppercase tracking-widest">
+                      Config
+                    </Button>
+                  </div>
+
+                  <div className={cn(
+                    "p-4 rounded-xl bg-card border shadow-sm flex items-center justify-between group transition-all",
+                    isMaintenanceOverdue ? "border-danger/30 bg-danger/[0.02]" : "border-border"
+                  )}>
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center border transition-all",
+                        isMaintenanceOverdue ? "bg-danger text-white border-danger" : "bg-success/5 text-success border-success/10"
+                      )}>
+                        {isMaintenanceOverdue ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mb-1">Current Ledger</p>
+                        <p className={cn("text-sm font-bold", isMaintenanceOverdue ? "text-danger" : "text-success")}>
+                          Maintenance {flat.maintenanceStatus}
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant={isMaintenanceOverdue ? 'danger' : 'outline'} size="sm" className={cn(
+                      "rounded-md h-8 px-3 text-[9px] font-bold uppercase tracking-widest",
+                      isMaintenanceOverdue && "shadow-md shadow-danger/10"
+                    )}>
+                      {isMaintenanceOverdue ? 'Collect' : 'Logs'}
+                    </Button>
+                  </div>
                 </div>
               </section>
             </div>

@@ -1,7 +1,7 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 import Society from './society.model';
-import Resident from './resident.model';
+import Resident, { ResidentAttributes } from './resident.model';
 
 export enum OccupancyStatus {
   OWNER_OCCUPIED = 'OWNER_OCCUPIED',
@@ -27,7 +27,7 @@ export enum UnitType {
   PENTHOUSE = 'Penthouse',
 }
 
-interface PropertyAttributes {
+export interface PropertyAttributes {
   id: string;
   societyId: string;
   number: string;
@@ -40,7 +40,7 @@ interface PropertyAttributes {
   ownerId?: string;
   tenantId?: string;
   squareFeet?: number;
-  residents?: Resident[];
+  residents?: ResidentAttributes[];
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -50,11 +50,12 @@ interface PropertyAttributes {
 export interface PropertyCreationAttributes extends Optional<
   PropertyAttributes,
   'id' | 'ownerId' | 'tenantId' | 'squareFeet'
-> { }
+> {}
 
 class Property
   extends Model<PropertyAttributes, PropertyCreationAttributes>
-  implements PropertyAttributes {
+  implements PropertyAttributes
+{
   declare id: string;
   declare societyId: string;
   declare number: string;
@@ -75,7 +76,7 @@ class Property
   declare readonly society?: Society;
   declare readonly owner?: Resident;
   declare readonly tenant?: Resident;
-  declare residents?: Resident[];
+  declare residents?: ResidentAttributes[];
 }
 
 Property.init(
