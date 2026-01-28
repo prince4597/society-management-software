@@ -37,8 +37,8 @@ export interface PropertyAttributes {
   occupancyStatus: OccupancyStatus;
   maintenanceRule: MaintenanceRule;
   maintenanceStatus: MaintenanceStatus;
-  ownerId?: string;
-  tenantId?: string;
+  ownerId?: string | null;
+  tenantId?: string | null;
   squareFeet?: number;
   residents?: ResidentAttributes[];
   createdAt?: Date;

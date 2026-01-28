@@ -113,7 +113,7 @@ Resident.init(
       field: 'family_members',
     },
     flatIds: {
-      type: DataTypes.JSONB,
+      type: DataTypes.ARRAY(DataTypes.UUID),
       allowNull: true,
       defaultValue: [],
       field: 'flat_ids',

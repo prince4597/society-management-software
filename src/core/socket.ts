@@ -56,7 +56,7 @@ class SocketManager {
   private io: TypedSocketServer | null = null;
   private onAdminConnectCallback: (() => void) | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): SocketManager {
     if (!SocketManager.instance) {
@@ -78,7 +78,7 @@ class SocketManager {
       SocketData
     >(server, {
       cors: {
-        origin: env.CORS_ORIGIN,
+        origin: env.NODE_ENV === 'production' ? env.CORS_ORIGIN : '*',
         methods: ['GET', 'POST'],
         credentials: true,
       },

@@ -4,9 +4,9 @@ import { propertiesService } from '../api/properties.service';
 import { Flat, CreateFlatInput, UpdateFlatInput } from '../types';
 import { PaginationParams } from '@/types';
 
-export const useProperties = (initialParams?: PaginationParams) => {
+export const useProperties = (initialParams?: PaginationParams & { block?: string; search?: string }) => {
   const queryClient = useQueryClient();
-  const [params, setParams] = useState<PaginationParams>(initialParams || { page: 1, limit: 10 });
+  const [params, setParams] = useState<PaginationParams & { block?: string; search?: string }>(initialParams || { page: 1, limit: 12 });
 
   const {
     data,

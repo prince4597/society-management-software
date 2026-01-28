@@ -82,7 +82,7 @@ describe('ResidentService (Integration)', () => {
             const owner = response.data.find((r: any) => r.id === res1.id);
             expect(owner).toBeDefined();
             expect(owner?.coHabitants).toHaveLength(1);
-            expect(owner?.coHabitants?.[0].firstName).toBe('Family');
+            expect(owner?.coHabitants?.[0]?.firstName).toBe('Family');
             // PII Protection test
             expect(owner?.coHabitants?.[0]).not.toHaveProperty('email');
         });

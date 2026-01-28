@@ -7,7 +7,7 @@ import { FlatMappingDrawer } from '@/features/properties/components/FlatMappingD
 import { AddUnitModal } from '@/features/properties/components/AddUnitModal';
 import { Flat, ResidentRole } from '@/features/properties/types';
 import { Plus, Building2, Search, Filter, LayoutGrid, Layers, Loader2 } from 'lucide-react';
-import { Button, Badge } from '@/components/ui';
+import { Button, Badge, Pagination } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,14 +15,38 @@ type ViewMode = 'grid' | 'building';
 import { useProperties } from '@/features/properties/hooks/useProperties';
 
 export default function PropertiesPage() {
-  const { properties: flats, isLoading: loadingFlats, refresh: refreshFlats } = useProperties();
+  const [viewMode, setViewMode] = useState<ViewMode>('building');
+  const [selectedBlock, setSelectedBlock] = useState('A');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { 
+    properties: flats, 
+    meta,
+    params,
+    setParams,
+    isLoading: loadingFlats, 
+    refresh: refreshFlats 
+  } = useProperties({ 
+    page: 1, 
+    limit: 1000, // Show all units for the block
+    block: selectedBlock,
+    search: searchQuery
+  });
 
   const [selectedFlat, setSelectedFlat] = useState<Flat | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('building');
-  const [selectedBlock, setSelectedBlock] = useState('A');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Sync params when block or viewMode changes
+  useEffect(() => {
+    setParams(prev => ({
+      ...prev,
+      page: 1,
+      limit: 1000,
+      block: selectedBlock,
+      search: searchQuery
+    }));
+  }, [selectedBlock, searchQuery, setParams]);
 
   const loading = loadingFlats;
 
@@ -30,30 +54,26 @@ export default function PropertiesPage() {
     refreshFlats();
   }, [refreshFlats]);
 
+  // Blocks present in data - We might need a separate call for this or use a fixed list
+  // For now, assume A, B, C etc. as a fallback or get from first successful fetch
+  const [availableBlocks, setAvailableBlocks] = useState<string[]>(['A']);
+  
   useEffect(() => {
-    if (flats.length > 0 && !selectedBlock) {
-      setSelectedBlock(flats[0].block);
+    if (flats.length > 0) {
+      const detectedBlocks = Array.from(new Set(flats.map((f) => f.block))).sort();
+      if (detectedBlocks.length > 0) {
+        setAvailableBlocks(prev => {
+          const combined = Array.from(new Set([...prev, ...detectedBlocks])).sort();
+          return combined;
+        });
+      }
     }
-  }, [flats, selectedBlock]);
+  }, [flats]);
 
-  // Blocks present in data
-  const blocks = useMemo(
-    () => Array.from(new Set(flats.map((f) => f.block))).sort(),
-    [flats]
-  );
+  const blocks = availableBlocks;
 
-  // Filter flats by current block and search query
-  const filteredFlats = useMemo(() => {
-    return flats.filter(
-      (f) =>
-        f.block === selectedBlock &&
-        (f.number.includes(searchQuery) ||
-          (f.residents || []).some(r => 
-            r.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            r.lastName.toLowerCase().includes(searchQuery.toLowerCase())
-          ))
-    );
-  }, [selectedBlock, searchQuery, flats]);
+  // Since we fetch by block now, we don't need to filter by block client-side
+  const filteredFlats = flats;
 
   const groupedFlats = useMemo(() => {
     return filteredFlats.reduce((acc, flat) => {
@@ -259,6 +279,17 @@ export default function PropertiesPage() {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Registry Status Footer */}
+      <div className="flex justify-between items-center bg-card border border-border/60 p-6 rounded-[2rem] shadow-sm">
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+          Showing <span className="text-foreground">{flats.length}</span> Total Units in Block {selectedBlock}
+        </div>
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          Live Inventory
+        </div>
       </div>
 
       {/* Detailed Mapping Drawer */}

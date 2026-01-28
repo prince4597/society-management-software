@@ -43,30 +43,46 @@ export class ResidentService extends BaseService<
         societyId,
       }, { transaction });
 
-      // 2. If flatIds are provided and it's a primary role, update property links atomically
-      if (input.flatIds && input.flatIds.length > 0) {
-        const isPrimaryRole = input.role === ResidentRole.PRIMARY_OWNER || input.role === ResidentRole.TENANT;
+      // 2. Synchronize property links
+      await this.syncPropertyLinks(resident.id, societyId, input.role, input.flatIds || [], transaction);
 
-        if (isPrimaryRole) {
-          const occupancyStatus = input.role === ResidentRole.TENANT
-            ? OccupancyStatus.RENTED
-            : OccupancyStatus.OWNER_OCCUPIED;
+      await transaction.commit();
+      return resident.toJSON() as ResidentAttributes;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 
-          const updateData: Record<string, any> = { occupancyStatus };
-          if (input.role === ResidentRole.TENANT) {
-            updateData.tenantId = resident.id;
-          } else {
-            updateData.ownerId = resident.id;
-          }
+  async updateInSociety(
+    societyId: string,
+    id: string,
+    input: UpdateResidentInput
+  ): Promise<ResidentAttributes> {
+    const transaction: Transaction = await sequelize.transaction();
 
-          await propertyRepository.getModel().update(updateData, {
-            where: {
-              id: input.flatIds,
-              societyId
-            },
-            transaction
-          });
-        }
+    try {
+      const resident = await this.repository.getModel().findOne({
+        where: { id, societyId },
+        transaction
+      });
+
+      if (!resident) throw new NotFoundError('Resident', id);
+
+      const oldRole = resident.role;
+      const oldFlatIds = resident.flatIds || [];
+
+      await resident.update(input, { transaction });
+
+      // If role or flatIds changed, sync property links
+      if (input.role !== undefined || input.flatIds !== undefined) {
+        await this.syncPropertyLinks(
+          id,
+          societyId,
+          input.role || oldRole,
+          input.flatIds || oldFlatIds,
+          transaction
+        );
       }
 
       await transaction.commit();
@@ -74,6 +90,49 @@ export class ResidentService extends BaseService<
     } catch (error) {
       await transaction.rollback();
       throw error;
+    }
+  }
+
+  private async syncPropertyLinks(
+    residentId: string,
+    societyId: string,
+    role: ResidentRole,
+    currentFlatIds: string[],
+    transaction: Transaction
+  ): Promise<void> {
+    const isPrimaryRole = role === ResidentRole.PRIMARY_OWNER || role === ResidentRole.TENANT;
+
+    // 1. Unlink from ALL properties where this resident was previously owner/tenant
+    // This ensures no ghost links remain if the resident is moved or downgraded
+    await propertyRepository.getModel().update(
+      { ownerId: null, occupancyStatus: OccupancyStatus.VACANT },
+      { where: { ownerId: residentId, societyId }, transaction }
+    );
+    await propertyRepository.getModel().update(
+      { tenantId: null, occupancyStatus: OccupancyStatus.VACANT },
+      { where: { tenantId: residentId, societyId }, transaction }
+    );
+
+    // 2. If it's a primary role and there are flats, establish NEW links
+    if (isPrimaryRole && currentFlatIds.length > 0) {
+      const occupancyStatus = role === ResidentRole.TENANT
+        ? OccupancyStatus.RENTED
+        : OccupancyStatus.OWNER_OCCUPIED;
+
+      const updateData: Record<string, any> = { occupancyStatus };
+      if (role === ResidentRole.TENANT) {
+        updateData.tenantId = residentId;
+      } else {
+        updateData.ownerId = residentId;
+      }
+
+      await propertyRepository.getModel().update(updateData, {
+        where: {
+          id: currentFlatIds,
+          societyId
+        },
+        transaction
+      });
     }
   }
 

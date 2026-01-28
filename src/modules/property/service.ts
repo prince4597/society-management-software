@@ -39,11 +39,12 @@ class PropertyService extends BaseService<
 
   async findAllPaginatedInSociety(
     societyId: string,
-    pagination: Partial<PaginationParams & { search?: string }>
+    pagination: Partial<PaginationParams & { search?: string; block?: string }>
   ): Promise<PaginatedResult<PropertyAttributes>> {
     const response = await this.findAllPaginated({
       societyId,
       search: pagination.search,
+      where: pagination.block ? { block: pagination.block } : undefined,
       pagination: {
         page: pagination.page || 1,
         limit: pagination.limit || 10,

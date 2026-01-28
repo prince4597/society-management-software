@@ -25,7 +25,8 @@ import {
   TableBody,
   TableHead,
   TableRow,
-  TableCell
+  TableCell,
+  Pagination
 } from '@/components/ui';
 import { OwnerBadge, TenantBadge, FamilyBadge } from '@/features/residents/components/ResidentBadges';
 import { cn } from '@/lib/utils';
@@ -35,7 +36,14 @@ import { Skeleton, TableSkeleton } from '@/components/ui/Skeleton';
 import { useResidents } from '@/features/residents/hooks/useResidents';
 
 export default function ResidentsPage() {
-  const { residents, isLoading: loadingResidents, refresh: refreshResidents } = useResidents();
+  const { 
+    residents, 
+    meta,
+    params,
+    setParams,
+    isLoading: loadingResidents, 
+    refresh: refreshResidents 
+  } = useResidents();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
@@ -114,10 +122,10 @@ export default function ResidentsPage() {
       {/* High-Impact Analytics Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Verified', value: residents.filter((r: Resident) => r.isResident).length, icon: ShieldCheck, color: 'text-success', bg: 'bg-success/5' },
-          { label: 'Unit Owners', value: residents.filter((r: Resident) => r.role === ResidentRole.PRIMARY_OWNER).length, icon: Building, color: 'text-primary', bg: 'bg-primary/5' },
-          { label: 'Lease Holders', value: residents.filter((r: Resident) => r.role === ResidentRole.TENANT).length, icon: Users, color: 'text-info', bg: 'bg-info/5' },
-          { label: 'Absentee', value: residents.filter((r: Resident) => !r.isResident).length, icon: MapPin, color: 'text-warning', bg: 'bg-warning/5' },
+          { label: 'Total Community', value: meta?.total || residents.length, icon: ShieldCheck, color: 'text-success', bg: 'bg-success/5' },
+          { label: 'Owners (Page)', value: residents.filter((r: Resident) => r.role === ResidentRole.PRIMARY_OWNER).length, icon: Building, color: 'text-primary', bg: 'bg-primary/5' },
+          { label: 'Tenants (Page)', value: residents.filter((r: Resident) => r.role === ResidentRole.TENANT).length, icon: Users, color: 'text-info', bg: 'bg-info/5' },
+          { label: 'Family (Page)', value: residents.filter((r: Resident) => r.role === ResidentRole.FAMILY_MEMBER).length, icon: MapPin, color: 'text-warning', bg: 'bg-warning/5' },
         ].map((stat, i) => (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -247,6 +255,20 @@ export default function ResidentsPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {meta && meta.totalPages > 1 && (
+        <div className="flex justify-between items-center bg-card border border-border/60 p-6 rounded-[2rem] shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+            Showing <span className="text-foreground">{residents.length}</span> of <span className="text-foreground">{meta.total}</span> Members
+          </div>
+          <Pagination
+            currentPage={params.page || 1}
+            totalPages={meta.totalPages}
+            onPageChange={(page) => setParams(prev => ({ ...prev, page }))}
+          />
+        </div>
+      )}
 
       <ResidentProfileDrawer
         isOpen={isDrawerOpen}
