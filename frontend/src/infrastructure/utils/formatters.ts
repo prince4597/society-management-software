@@ -3,16 +3,21 @@
  * Standardizes raw input into +CC XXXXXXXXXX format
  */
 export const formatPhoneNumber = (val: string): string => {
-  const digits = val.replace(/\D/g, '');
-  if (!digits) return '';
+  if (!val) return '';
 
-  // Limit to 12 digits (CC + Number)
+  // Strip everything except digits
+  const digits = val.replace(/\D/g, '');
+
+  if (digits.length === 0) return '';
+
+  // Handle up to 12 digits (2 for CC + 10 for number)
   const limited = digits.slice(0, 12);
 
   if (limited.length <= 2) {
     return `+${limited}`;
   }
 
+  // Format as +CC XXXXXXXXXX
   return `+${limited.slice(0, 2)} ${limited.slice(2)}`;
 };
 

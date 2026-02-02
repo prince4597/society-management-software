@@ -1,6 +1,9 @@
 import SystemConfig from '../../models/system-config.model';
 import { BaseRepository } from '../../core/base.repository';
-import type { SystemConfigAttributes, SystemConfigCreationAttributes } from '../../models/system-config.model';
+import type {
+  SystemConfigAttributes,
+  SystemConfigCreationAttributes,
+} from '../../models/system-config.model';
 
 export class SystemConfigRepository extends BaseRepository<
   SystemConfig,

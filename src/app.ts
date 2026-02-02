@@ -14,7 +14,7 @@ import {
 } from './middleware';
 import { metricsRegistry, metricsMiddleware } from './utils/metrics';
 import routes from './routes';
-import { logger } from './utils/logger';
+import { logger, loggerContext } from './utils/logger';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerOptions } from './config/swagger';
@@ -28,13 +28,11 @@ export const createApp = (): Application => {
   app.use(cookieParser());
   app.use(compression());
 
-  const corsOrigins = env.CORS_ORIGIN.split(',').map(o => o.trim());
+  const corsOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
 
   app.use(
     cors({
-      origin: env.NODE_ENV === 'production'
-        ? corsOrigins
-        : true, // true allows reflections, useful for dev/preview
+      origin: env.NODE_ENV === 'production' ? corsOrigins : true, // true allows reflections, useful for dev/preview
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
       exposedHeaders: [
@@ -59,14 +57,27 @@ export const createApp = (): Application => {
   app.use(metricsMiddleware);
   app.use(apiRateLimiter);
 
-  if (env.NODE_ENV === 'development') {
-    app.use((req, _res, next) => {
-      logger.debug(`${req.method} ${req.path}`, {
-        requestId: req.context.requestId,
+  app.use((req, res, next) => {
+    const start = Date.now();
+    const store = new Map<string, string>();
+    store.set('requestId', req.context.requestId);
+
+    loggerContext.run(store, () => {
+      res.on('finish', () => {
+        const duration = Date.now() - start;
+        const message = `${req.method} ${req.path} ${res.statusCode} - ${duration}ms`;
+
+        if (res.statusCode >= 500) {
+          logger.error(message);
+        } else if (res.statusCode >= 400) {
+          logger.warn(message);
+        } else {
+          logger.info(message);
+        }
       });
       next();
     });
-  }
+  });
 
   app.get('/metrics', async (_req: Request, res: Response) => {
     res.set('Content-Type', metricsRegistry.contentType);

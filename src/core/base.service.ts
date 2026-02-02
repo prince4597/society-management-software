@@ -43,8 +43,10 @@ export abstract class BaseService<
   }
 
   async create(data: CreateDTO, societyId?: string): Promise<ServiceResponse<T>> {
-    const createData = societyId ? ({ ...data, societyId } as CreateDTO & { societyId?: string }) : data;
-    const entity = await this.repository.create(createData as CreateDTO);
+    const createData = societyId
+      ? ({ ...data, societyId } as CreateDTO & { societyId?: string })
+      : data;
+    const entity = await this.repository.create(createData);
     logger.info(`${this.entityName} created successfully`);
     return this.success(entity, `${this.entityName} created successfully`);
   }

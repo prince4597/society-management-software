@@ -80,11 +80,7 @@ export abstract class BaseRepository<
     const findOptions: SequelizeFindOptions = {};
 
     if (options?.where || options?.societyId || options?.search) {
-      findOptions.where = this.buildWhereClause(
-        options.where,
-        options.societyId,
-        options.search
-      ) as WhereOptions;
+      findOptions.where = this.buildWhereClause(options.where, options.societyId, options.search);
     }
 
     if (options?.include) {
@@ -109,7 +105,7 @@ export abstract class BaseRepository<
     try {
       const model = this.getScopedModel(societyId);
       const record = await model.findByPk(id as any);
-      return record ? (record.toJSON() as Attributes) : null;
+      return record ? record.toJSON() : null;
     } catch (error) {
       logger.error(`${this.entityName}.findById failed:`, error);
       throw new DatabaseError(`Failed to find ${this.entityName}`);
@@ -120,7 +116,7 @@ export abstract class BaseRepository<
     try {
       const model = this.getScopedModel(options.societyId);
       const record = await model.findOne(this.buildFindOptions(options));
-      return record ? (record.toJSON() as Attributes) : null;
+      return record ? record.toJSON() : null;
     } catch (error) {
       logger.error(`${this.entityName}.findOne failed:`, error);
       throw new DatabaseError(`Failed to find ${this.entityName}`);
@@ -131,7 +127,7 @@ export abstract class BaseRepository<
     try {
       const model = this.getScopedModel(options?.societyId);
       const records = await model.findAll(this.buildFindOptions(options));
-      return records.map((record) => record.toJSON() as Attributes);
+      return records.map((record) => record.toJSON());
     } catch (error) {
       logger.error(`${this.entityName}.findAll failed:`, error);
       throw new DatabaseError(`Failed to fetch ${this.entityName} list`);
@@ -145,7 +141,7 @@ export abstract class BaseRepository<
       const { count, rows } = await model.findAndCountAll(this.buildFindOptions(options));
 
       return {
-        data: rows.map((record) => record.toJSON() as Attributes),
+        data: rows.map((record) => record.toJSON()),
         meta: calculatePaginationMeta(count, pagination.page, pagination.limit),
       };
     } catch (error) {
@@ -157,7 +153,7 @@ export abstract class BaseRepository<
   async create(data: CreateDTO): Promise<Attributes> {
     try {
       const record = await this.model.create(data as unknown as T['_creationAttributes']);
-      return record.toJSON() as Attributes;
+      return record.toJSON();
     } catch (error) {
       logger.error(`${this.entityName}.create failed:`, error);
       throw new DatabaseError(`Failed to create ${this.entityName}`);
@@ -174,7 +170,7 @@ export abstract class BaseRepository<
       }
 
       await record.update(data as any);
-      return record.toJSON() as Attributes;
+      return record.toJSON();
     } catch (error) {
       logger.error(`${this.entityName}.update failed:`, error);
       throw new DatabaseError(`Failed to update ${this.entityName}`);
@@ -198,7 +194,10 @@ export abstract class BaseRepository<
     }
   }
 
-  async count(where?: Partial<Attributes> | Record<string, unknown>, societyId?: string): Promise<number> {
+  async count(
+    where?: Partial<Attributes> | Record<string, unknown>,
+    societyId?: string
+  ): Promise<number> {
     try {
       const model = this.getScopedModel(societyId);
       return await model.count({

@@ -18,7 +18,8 @@ export type SystemConfigCreationAttributes = Optional<
 
 class SystemConfig
   extends Model<SystemConfigAttributes, SystemConfigCreationAttributes>
-  implements SystemConfigAttributes {
+  implements SystemConfigAttributes
+{
   declare id: string;
   declare key: string;
   declare value: unknown;

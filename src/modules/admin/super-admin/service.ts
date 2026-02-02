@@ -43,7 +43,9 @@ class SuperAdminService {
     if (existingAdmin) {
       if (existingAdmin.deletedAt) {
         // Restore and update soft-deleted admin
-        const adminModel = await adminRepository.getModel().findByPk(existingAdmin.id, { paranoid: false });
+        const adminModel = await adminRepository
+          .getModel()
+          .findByPk(existingAdmin.id, { paranoid: false });
         if (!adminModel) throw new NotFoundError('Admin', existingAdmin.id);
 
         await adminModel.restore();
@@ -58,7 +60,7 @@ class SuperAdminService {
         });
 
         logger.info(`Super Admin restored soft-deleted admin ${email} for society ${societyId}`);
-        const adminJson = adminModel.toJSON() as AdminAttributes;
+        const adminJson = adminModel.toJSON();
         const { password: _password, ...rest } = adminJson;
         return rest;
       }

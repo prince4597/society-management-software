@@ -61,6 +61,7 @@ export interface PaginationParams {
   limit?: number;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
+  search?: string;
 }
 
 export interface PaginationMeta {

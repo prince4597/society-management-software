@@ -1,12 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, Button } from '@/components/ui';
-import { UnitType } from '../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Dialog, Button, Input } from '@/components/ui';
+import { UnitType, OccupancyStatus, MaintenanceRule, MaintenanceStatus } from '../types';
 import { Building2, Hash, Layers, Home, Ruler } from 'lucide-react';
-
 import { propertyApi } from '../api';
-import { OccupancyStatus, MaintenanceRule, MaintenanceStatus } from '../types';
+
+const unitSchema = z.object({
+  block: z.string().min(1, 'Block is required').max(10).toUpperCase(),
+  floor: z.number().int('Floor must be an integer'),
+  number: z.string().min(1, 'Unit number is required'),
+  unitType: z.nativeEnum(UnitType),
+  squareFeet: z.number().positive('Square feet must be positive'),
+});
+
+type UnitFormValues = z.infer<typeof unitSchema>;
 
 interface AddUnitModalProps {
   isOpen: boolean;
@@ -16,28 +27,31 @@ interface AddUnitModalProps {
 
 export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    block: 'A',
-    floor: '',
-    number: '',
-    unitType: UnitType.BHK_2,
-    squareFeet: '',
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<UnitFormValues>({
+    resolver: zodResolver(unitSchema),
+    defaultValues: {
+      block: 'A',
+      unitType: UnitType.BHK_2,
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: UnitFormValues) => {
     try {
       setIsSubmitting(true);
       await propertyApi.create({
-        ...formData,
-        floor: parseInt(formData.floor),
-        squareFeet: parseInt(formData.squareFeet),
+        ...data,
         occupancyStatus: OccupancyStatus.VACANT,
         maintenanceRule: MaintenanceRule.DEFAULT_OWNER,
         maintenanceStatus: MaintenanceStatus.PAID,
       });
       onSuccess?.();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Failed to register unit:', error);
     } finally {
@@ -45,60 +59,51 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
     }
   };
 
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} title="Register New Property Unit">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <Dialog isOpen={isOpen} onClose={handleClose} title="Register New Property Unit">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Building Block</label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-              <input
-                className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold"
-                value={formData.block}
-                onChange={(e) => setFormData({ ...formData, block: e.target.value.toUpperCase() })}
-                placeholder="A, B, C..."
-                maxLength={2}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking_widest ml-1">Floor Level</label>
-            <div className="relative">
-              <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-              <input
-                type="number"
-                className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold"
-                value={formData.floor}
-                onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
-                placeholder="0"
-              />
-            </div>
-          </div>
+          <Input
+            {...register('block')}
+            label="Building Block"
+            placeholder="A, B, C..."
+            leftIcon={<Building2 size={16} />}
+            error={errors.block?.message}
+            maxLength={2}
+          />
+          <Input
+            {...register('floor', { valueAsNumber: true })}
+            type="number"
+            label="Floor Level"
+            placeholder="0"
+            leftIcon={<Layers size={16} />}
+            error={errors.floor?.message}
+          />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Unit / Flat Number</label>
-          <div className="relative">
-            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-            <input
-              className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold"
-              value={formData.number}
-              onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-              placeholder="e.g. 101, 102..."
-            />
-          </div>
-        </div>
+        <Input
+          {...register('number')}
+          label="Unit / Flat Number"
+          placeholder="e.g. 101, 102..."
+          leftIcon={<Hash size={16} />}
+          error={errors.number?.message}
+        />
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Asset Configuration</label>
-            <div className="relative">
-              <Home className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-0.5">Asset Configuration</label>
+            <div className="relative group">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                <Home size={16} />
+              </div>
               <select
-                className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold appearance-none cursor-pointer"
-                value={formData.unitType}
-                onChange={(e) => setFormData({ ...formData, unitType: e.target.value as UnitType })}
+                {...register('unitType')}
+                className="w-full bg-input border border-border rounded-md pl-9 h-9 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary appearance-none cursor-pointer font-bold"
               >
                 {Object.values(UnitType).map(type => (
                   <option key={type} value={type}>{type}</option>
@@ -106,23 +111,18 @@ export const AddUnitModal = ({ isOpen, onClose, onSuccess }: AddUnitModalProps) 
               </select>
             </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Area (Sq. Ft.)</label>
-            <div className="relative">
-              <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
-              <input
-                type="number"
-                className="w-full bg-secondary/30 border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-primary/5 outline-none font-bold"
-                value={formData.squareFeet}
-                onChange={(e) => setFormData({ ...formData, squareFeet: e.target.value })}
-                placeholder="1200"
-              />
-            </div>
-          </div>
+          <Input
+            {...register('squareFeet', { valueAsNumber: true })}
+            type="number"
+            label="Area (Sq. Ft.)"
+            placeholder="1200"
+            leftIcon={<Ruler size={16} />}
+            error={errors.squareFeet?.message}
+          />
         </div>
 
         <div className="pt-4 flex gap-3">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px]">
+          <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="flex-1 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px]">
             Cancel
           </Button>
           <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting} className="flex-1 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">

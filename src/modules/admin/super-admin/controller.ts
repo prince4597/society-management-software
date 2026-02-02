@@ -23,7 +23,9 @@ class SuperAdminController extends BaseController {
   getDashboardData = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const [stats, configs, health] = await Promise.all([
       dashboardService.getStats(),
-      systemConfigRepository.findAll({ pagination: { page: 1, limit: 100, sortBy: 'key', sortOrder: 'ASC' } }),
+      systemConfigRepository.findAll({
+        pagination: { page: 1, limit: 100, sortBy: 'key', sortOrder: 'ASC' },
+      }),
       collectHealthData(),
     ]);
 
@@ -36,7 +38,7 @@ class SuperAdminController extends BaseController {
 
   getConfigs = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const configs = await systemConfigRepository.findAll({
-      pagination: { page: 1, limit: 100, sortBy: 'key', sortOrder: 'ASC' }
+      pagination: { page: 1, limit: 100, sortBy: 'key', sortOrder: 'ASC' },
     });
     return this.success(req, res, configs);
   });

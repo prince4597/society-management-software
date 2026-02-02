@@ -38,16 +38,25 @@ export class ResidentService extends BaseService<
 
     try {
       // 1. Create the resident
-      const resident = await this.repository.getModel().create({
-        ...input,
-        societyId,
-      }, { transaction });
+      const resident = await this.repository.getModel().create(
+        {
+          ...(input as any),
+          societyId,
+        },
+        { transaction }
+      );
 
       // 2. Synchronize property links
-      await this.syncPropertyLinks(resident.id, societyId, input.role, input.flatIds || [], transaction);
+      await this.syncPropertyLinks(
+        resident.id,
+        societyId,
+        input.role,
+        input.flatIds || [],
+        transaction
+      );
 
       await transaction.commit();
-      return resident.toJSON() as ResidentAttributes;
+      return resident.toJSON();
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -64,7 +73,7 @@ export class ResidentService extends BaseService<
     try {
       const resident = await this.repository.getModel().findOne({
         where: { id, societyId },
-        transaction
+        transaction,
       });
 
       if (!resident) throw new NotFoundError('Resident', id);
@@ -72,7 +81,7 @@ export class ResidentService extends BaseService<
       const oldRole = resident.role;
       const oldFlatIds = resident.flatIds || [];
 
-      await resident.update(input, { transaction });
+      await resident.update(input as any, { transaction });
 
       // If role or flatIds changed, sync property links
       if (input.role !== undefined || input.flatIds !== undefined) {
@@ -86,7 +95,7 @@ export class ResidentService extends BaseService<
       }
 
       await transaction.commit();
-      return resident.toJSON() as ResidentAttributes;
+      return resident.toJSON();
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -104,20 +113,23 @@ export class ResidentService extends BaseService<
 
     // 1. Unlink from ALL properties where this resident was previously owner/tenant
     // This ensures no ghost links remain if the resident is moved or downgraded
-    await propertyRepository.getModel().update(
-      { ownerId: null, occupancyStatus: OccupancyStatus.VACANT },
-      { where: { ownerId: residentId, societyId }, transaction }
-    );
-    await propertyRepository.getModel().update(
-      { tenantId: null, occupancyStatus: OccupancyStatus.VACANT },
-      { where: { tenantId: residentId, societyId }, transaction }
-    );
+    await propertyRepository
+      .getModel()
+      .update(
+        { ownerId: null, occupancyStatus: OccupancyStatus.VACANT },
+        { where: { ownerId: residentId, societyId }, transaction }
+      );
+    await propertyRepository
+      .getModel()
+      .update(
+        { tenantId: null, occupancyStatus: OccupancyStatus.VACANT },
+        { where: { tenantId: residentId, societyId }, transaction }
+      );
 
     // 2. If it's a primary role and there are flats, establish NEW links
     if (isPrimaryRole && currentFlatIds.length > 0) {
-      const occupancyStatus = role === ResidentRole.TENANT
-        ? OccupancyStatus.RENTED
-        : OccupancyStatus.OWNER_OCCUPIED;
+      const occupancyStatus =
+        role === ResidentRole.TENANT ? OccupancyStatus.RENTED : OccupancyStatus.OWNER_OCCUPIED;
 
       const updateData: Record<string, any> = { occupancyStatus };
       if (role === ResidentRole.TENANT) {
@@ -129,9 +141,9 @@ export class ResidentService extends BaseService<
       await propertyRepository.getModel().update(updateData, {
         where: {
           id: currentFlatIds,
-          societyId
+          societyId,
         },
-        transaction
+        transaction,
       });
     }
   }
@@ -178,14 +190,14 @@ export class ResidentService extends BaseService<
         const potentialCoHabitants = await this.repository.findAll({
           where: {
             societyId,
-            flatIds: { [Op.overlap]: uniqueFlatIds }
+            flatIds: { [Op.overlap]: uniqueFlatIds },
           } as Record<string, unknown>,
-          include: [] // Ensure no deep relations are fetched for co-habitants
+          include: [], // Ensure no deep relations are fetched for co-habitants
         });
 
         paginatedResult.data = this.enrichResidents(paginatedResult.data, potentialCoHabitants);
       } else {
-        paginatedResult.data = paginatedResult.data.map(r => ({ ...r, coHabitants: [] }));
+        paginatedResult.data = paginatedResult.data.map((r) => ({ ...r, coHabitants: [] }));
       }
     }
 
@@ -204,17 +216,19 @@ export class ResidentService extends BaseService<
         residentData.coHabitants = potentialCoHabitants
           .filter(
             (other) =>
-              other.id !== r.id &&
-              (other.flatIds || []).some((fid) => flatIds.includes(fid))
+              other.id !== r.id && (other.flatIds || []).some((fid) => flatIds.includes(fid))
           )
-          .map(other => ({
-            id: other.id,
-            firstName: other.firstName,
-            lastName: other.lastName,
-            role: other.role,
-            isResident: other.isResident,
-            profileImage: other.profileImage,
-          } as ResidentAttributes)); // Restrict to non-sensitive fields
+          .map(
+            (other) =>
+              ({
+                id: other.id,
+                firstName: other.firstName,
+                lastName: other.lastName,
+                role: other.role,
+                isResident: other.isResident,
+                profileImage: other.profileImage,
+              }) as ResidentAttributes
+          ); // Restrict to non-sensitive fields
       } else {
         residentData.coHabitants = [];
       }
@@ -252,13 +266,13 @@ export class ResidentService extends BaseService<
       const potentialCoHabitants = await this.repository.findAll({
         where: {
           societyId,
-          flatIds: { [Op.overlap]: uniqueFlatIds }
-        } as Record<string, unknown>
+          flatIds: { [Op.overlap]: uniqueFlatIds },
+        } as Record<string, unknown>,
       });
       return this.enrichResidents(residents, potentialCoHabitants);
     }
 
-    return residents.map(r => ({ ...r, coHabitants: [] }));
+    return residents.map((r) => ({ ...r, coHabitants: [] }));
   }
 
   async findByIdInSociety(societyId: string, id: string): Promise<ResidentAttributes> {

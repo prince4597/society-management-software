@@ -75,20 +75,20 @@ class PropertyService extends BaseService<
         return acc;
       }, new Set<string>());
 
-      const propertyIds = paginatedResult.data.map(p => p.id);
+      const propertyIds = paginatedResult.data.map((p) => p.id);
 
       // Fetch residents who either are owners/tenants OR have these properties in their flatIds
       const potentialLinkedResidents = await residentRepository.findAll({
         where: {
           societyId,
-          [Op.or]: [
-            { id: Array.from(residentIds) },
-            { flatIds: { [Op.overlap]: propertyIds } }
-          ]
-        } as Record<string, unknown>
+          [Op.or]: [{ id: Array.from(residentIds) }, { flatIds: { [Op.overlap]: propertyIds } }],
+        } as Record<string, unknown>,
       });
 
-      paginatedResult.data = await this.enrichPropertiesWithResidents(paginatedResult.data, potentialLinkedResidents);
+      paginatedResult.data = await this.enrichPropertiesWithResidents(
+        paginatedResult.data,
+        potentialLinkedResidents
+      );
     }
 
     return paginatedResult;
@@ -102,19 +102,19 @@ class PropertyService extends BaseService<
       const propertyWithResidents = { ...p } as PropertyWithResidents;
       propertyWithResidents.residents = potentialResidents
         .filter(
-          (r) =>
-            (r.flatIds || []).includes(p.id) ||
-            r.id === p.ownerId ||
-            r.id === p.tenantId
+          (r) => (r.flatIds || []).includes(p.id) || r.id === p.ownerId || r.id === p.tenantId
         )
-        .map(r => ({
-          id: r.id,
-          firstName: r.firstName,
-          lastName: r.lastName,
-          role: r.role,
-          isResident: r.isResident,
-          profileImage: r.profileImage,
-        } as ResidentAttributes)); // PII Protection: only expose necessary info in list
+        .map(
+          (r) =>
+            ({
+              id: r.id,
+              firstName: r.firstName,
+              lastName: r.lastName,
+              role: r.role,
+              isResident: r.isResident,
+              profileImage: r.profileImage,
+            }) as ResidentAttributes
+        ); // PII Protection: only expose necessary info in list
       return propertyWithResidents;
     });
   }
@@ -145,16 +145,13 @@ class PropertyService extends BaseService<
       return acc;
     }, new Set<string>());
 
-    const propertyIds = properties.map(p => p.id);
+    const propertyIds = properties.map((p) => p.id);
 
     const potentialResidents = await residentRepository.findAll({
       where: {
         societyId,
-        [Op.or]: [
-          { id: Array.from(residentIds) },
-          { flatIds: { [Op.overlap]: propertyIds } }
-        ]
-      } as Record<string, unknown>
+        [Op.or]: [{ id: Array.from(residentIds) }, { flatIds: { [Op.overlap]: propertyIds } }],
+      } as Record<string, unknown>,
     });
 
     return this.enrichPropertiesWithResidents(properties, potentialResidents);
@@ -196,7 +193,7 @@ class PropertyService extends BaseService<
 
     const linkedResidents = await residentRepository.findAll({
       where: whereClause as Record<string, unknown>,
-      societyId
+      societyId,
     });
 
     return {

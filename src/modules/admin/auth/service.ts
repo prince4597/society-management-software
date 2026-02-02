@@ -26,7 +26,7 @@ interface AdminWithSociety extends AdminAttributes {
 
 export class AuthService {
   public async login(input: LoginInput): Promise<LoginResponse> {
-    const admin = await adminRepository.findOne({
+    const admin = (await adminRepository.findOne({
       where: { email: input.email, isActive: true } as Record<string, unknown>,
       include: [
         {
@@ -35,7 +35,7 @@ export class AuthService {
           attributes: ['id', 'name'],
         },
       ],
-    }) as AdminWithSociety | null;
+    })) as AdminWithSociety | null;
 
     if (!admin) {
       throw new UnauthorizedError('Invalid email or password');
@@ -67,10 +67,10 @@ export class AuthService {
   }
 
   public async getProfile(adminId: string): Promise<AdminProfile> {
-    const admin = await adminRepository.findOne({
+    const admin = (await adminRepository.findOne({
       where: { id: adminId } as Record<string, unknown>,
       include: [{ model: societyRepository.getModel(), as: 'society', attributes: ['id', 'name'] }],
-    }) as AdminWithSociety | null;
+    })) as AdminWithSociety | null;
 
     if (!admin || !admin.isActive) {
       throw new UnauthorizedError('Account not found or inactive');
@@ -90,9 +90,9 @@ export class AuthService {
       isActive: admin.isActive,
       society: admin.society
         ? {
-          id: admin.society.id,
-          name: admin.society.name,
-        }
+            id: admin.society.id,
+            name: admin.society.name,
+          }
         : undefined,
       lastLogin: admin.lastLogin || undefined,
       createdAt: admin.createdAt,

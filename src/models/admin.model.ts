@@ -21,7 +21,7 @@ export interface AdminAttributes {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface AdminCreationAttributes extends Optional<AdminAttributes, 'id' | 'isActive'> { }
+export interface AdminCreationAttributes extends Optional<AdminAttributes, 'id' | 'isActive'> {}
 
 class Admin extends Model<AdminAttributes, AdminCreationAttributes> implements AdminAttributes {
   declare id: string;

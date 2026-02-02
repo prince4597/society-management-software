@@ -9,7 +9,7 @@ class HealthBroadcastService {
   private readonly broadcastIntervalMs = 5000;
   private isRunning = false;
 
-  private constructor() { }
+  private constructor() {}
 
   static getInstance(): HealthBroadcastService {
     if (!HealthBroadcastService.instance) {
@@ -43,10 +43,7 @@ class HealthBroadcastService {
 
   async broadcastImmediate(): Promise<void> {
     try {
-      const [health, stats] = await Promise.all([
-        collectHealthData(),
-        dashboardService.getStats(),
-      ]);
+      const [health, stats] = await Promise.all([collectHealthData(), dashboardService.getStats()]);
       socketManager.broadcastToAdmins('health:update', health);
       socketManager.broadcastToAdmins('system:stats:update', stats);
       logger.debug('Immediate health and stats broadcast sent');
@@ -63,10 +60,7 @@ class HealthBroadcastService {
     }
 
     try {
-      const [health, stats] = await Promise.all([
-        collectHealthData(),
-        dashboardService.getStats(),
-      ]);
+      const [health, stats] = await Promise.all([collectHealthData(), dashboardService.getStats()]);
       socketManager.broadcastToAdmins('health:update', health);
       socketManager.broadcastToAdmins('system:stats:update', stats);
     } catch (error) {

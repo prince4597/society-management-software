@@ -38,11 +38,12 @@ export interface ResidentAttributes {
 export interface ResidentCreationAttributes extends Optional<
   ResidentAttributes,
   'id' | 'familyMembers' | 'profileImage'
-> { }
+> {}
 
 class Resident
   extends Model<ResidentAttributes, ResidentCreationAttributes>
-  implements ResidentAttributes {
+  implements ResidentAttributes
+{
   declare id: string;
   declare societyId: string;
   declare firstName: string;

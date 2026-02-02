@@ -110,7 +110,7 @@ class SocietyService extends BaseService<
       logger.info(`Society "${societyModel.name}" onboarded with admin ${adminModel.email}`);
 
       return {
-        society: societyModel.toJSON() as SocietyAttributes,
+        society: societyModel.toJSON(),
         admin: {
           id: adminModel.id,
           email: adminModel.email,
@@ -131,7 +131,7 @@ class SocietyService extends BaseService<
   }
 
   async getSocietyDetails(id: string): Promise<SocietyDetailResult> {
-    const society = await this.repository.findOne({
+    const society = (await this.repository.findOne({
       where: { id } as Record<string, unknown>,
       include: [
         {
@@ -140,7 +140,7 @@ class SocietyService extends BaseService<
           attributes: { exclude: ['password'] },
         },
       ],
-    }) as SocietyWithAdmins | null;
+    })) as SocietyWithAdmins | null;
 
     if (!society) {
       throw new NotFoundError('Society', id);
